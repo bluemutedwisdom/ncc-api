@@ -1,0 +1,206 @@
+#!/usr/bin/env rspec
+# -*- mode: ruby -*-
+
+require 'pcm_spec_helper'
+require 'pcm/config'
+require 'fileutils'
+
+describe PCM::Config do
+
+    context "initializing" do
+
+        before(:all) { setup_fixture }
+
+        after(:all)  { cleanup_fixture }
+
+        it "creates a PCM::Config object" do
+            pcm = PCM::Config.new('test/data/etc')
+            pcm.should be_an_instance_of PCM::Config
+        end
+
+        it "is current" do
+            set_testvalue('testvalue0')
+            pcm = PCM::Config.new('test/data/etc/test.conf')
+            pcm.current?.should be_true
+        end
+
+        it "raises an ArgumentError when config doesn't exist" do
+            lambda do
+                PCM::Config.new('nonexistent')
+            end.should raise_error ArgumentError
+        end
+
+        it "parses a single file" do
+            set_testvalue('testvalue0')
+            pcm = PCM::Config.new('test/data/etc/test.conf')
+            pcm.should have_key 'testkey'
+            pcm['testkey'].should == 'testvalue0'
+        end
+
+    end
+
+    context "accessing file-based config" do
+
+        before(:all) { setup_fixture }
+
+        after(:all)  { setup_fixture }
+
+        before :each do
+            set_testvalue('testvalue0')
+            $logger = LogCatcher.new
+            $pcm = PCM::Config.new('test/data/etc/test.conf',
+                               :logger => $logger)
+        end
+
+        it "produces a hash" do
+            $pcm.to_hash.should be_an_instance_of Hash
+        end
+
+        it "produces a hash with all the keys" do
+            $pcm.to_hash.should have_key 'testkey'
+        end
+
+
+        it "updates when the file changes" do
+            sleep 2
+            set_testvalue('testvalue1')
+            $pcm['testkey'].should == 'testvalue1'
+        end
+
+        it "doesn't update when within staleness_threshold" do
+            pcm = PCM::Config.new('test/data/etc/test.conf',
+                              :staleness_threshold => 4)
+            sleep 2
+            set_testvalue('testvalue1')
+            pcm['testkey'].should == 'testvalue0'
+            sleep 3
+            pcm['testkey'].should == 'testvalue1'
+        end
+
+        it "warns when file goes bad" do
+            sleep 2
+            File.open('test/data/etc/test.conf', 'w') do |fh|
+                fh << "bad json"
+            end
+
+            $pcm['testkey'].should == 'testvalue0'
+            $logger['warn'][0].should match /not updating/
+        end
+
+        it "empties config if file goes away" do
+            sleep 2
+            FileUtils.rm 'test/data/etc/test.conf'
+            $pcm.should_not have_key 'testkey'
+        end
+
+    end
+
+    context "accessing directory-based config" do
+
+        before(:all) { setup_fixture }
+
+        after(:all)  { cleanup_fixture }
+
+        before :each do
+            set_testvalue 'testvalue0'
+            FileUtils.mkdir 'test/data/etc/testdir'
+            $logger = LogCatcher.new
+            $pcm = PCM::Config.new('test/data/etc',
+                               :logger => $logger)
+        end
+
+        after :each do
+            FileUtils.rm_r 'test/data/etc/testdir' if
+                File.exist? 'test/data/etc/testdir'
+            FileUtils.rm 'test/data/etc/test.conf' if
+                File.exist? 'test/data/etc/test.conf'
+            FileUtils.rm 'test/data/etc/test2.conf' if
+                File.exist? 'test/data/etc/test2.conf'
+        end
+
+        it "creates a key for a file in the directory" do
+            $pcm.should have_key 'test'
+        end
+
+        it "stores a file-based config at the key named for the file" do
+            $pcm['test'].should have_key 'testkey'
+            $pcm['test']['testkey'].should == 'testvalue0'
+        end
+
+        it "deletes a file-based config when the file goes away" do
+            sleep 2
+            FileUtils.rm 'test/data/etc/test.conf'
+            $pcm.should_not have_key 'test'
+        end
+
+        it "adds a file-based config when a new file shows up" do
+            sleep 2
+            set_testvalue('testvalue1', 'test2')
+            $pcm.should have_key 'test2'
+            $pcm['test2'].should be_an_instance_of PCM::Config
+        end
+
+        it "doesn't regenerate file-based subconfiguration" do
+            pcmsub = $pcm['test']
+            sleep 2
+            set_testvalue('testvalue1', 'test2')
+            $pcm['test2'].should have_key 'testkey'
+            $pcm['test'].object_id.should == pcmsub.object_id
+        end
+
+        it "stores a directory-based configuration for subdirectories" do
+            $pcm.should have_key :testdir
+        end
+
+        it "adds a file-based config when a new directory shows up" do
+            $pcm.should_not have_key :testdir2
+            sleep 2
+            FileUtils.mkdir('test/data/etc/testdir2')
+            $pcm.should have_key :testdir2
+        end
+
+        it "deletes a directory-based config when the directory goes away" do
+            sleep 2
+            FileUtils.rmdir 'test/data/etc/testdir'
+            $pcm.should_not have_key :testdir
+        end
+
+        it "produces a hash slice" do
+            h = $pcm.to_hash(:clouds, 'services')
+            h.should have(2).items
+            h.should have_key :clouds
+            h.should have_key 'services'
+            h.should_not have_key 'testkey'
+        end
+
+    end
+
+    context "storing" do
+        before(:all) { setup_fixture }
+        after(:all)  { cleanup_fixture }
+
+        before :each do
+            set_testvalue 'testvalue0'
+            FileUtils.mkdir 'test/data/etc/testdir'
+            $logger = LogCatcher.new
+            $pcm = PCM::Config.new('test/data/etc',
+                               :logger => $logger)
+        end
+
+        after :each do
+            FileUtils.rm_r 'test/data/etc/testdir'
+        end
+
+        it "stores a value" do
+            $pcm['key'] = 'value'
+            $pcm['key'].should == 'value'
+        end
+
+        it "deletes a value" do
+            $pcm['key'] = 'value'
+            $pcm.delete('key').should == 'value'
+            $pcm['key'].should be_nil
+        end
+    end
+
+end

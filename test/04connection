@@ -1,0 +1,361 @@
+#!/usr/bin/env rspec
+# -*- mode: ruby -*-
+
+$LOAD_PATH.unshift '/opt/pptools'
+require 'ppenv'
+
+require 'pcm_spec_helper'
+require 'rubygems'
+require 'pcm'
+require 'fog'
+
+Fog.mock!
+
+describe PCM::Connection do
+
+    before(:all)  { setup_fixture }
+    after(:all)   { cleanup_fixture }
+
+    before :each do
+        $logger = LogCatcher.new
+        $pcm  = PCM::new('test/data/etc', :logger => $logger)
+        $aws  = $pcm.clouds('awscloud')
+        $os   = $pcm.clouds('openstack0')
+        $os.instance_eval { undef :size_id_field } if
+            $os.respond_to? :size_id_field
+        $os.instance_eval { undef :image_id_field } if
+            $os.respond_to? :image_id_field
+        $os.instance_eval { undef :translate_size } if
+            $os.respond_to? :translate_size
+        $os.instance_eval { undef :translate_image } if
+            $os.respond_to? :translate_image
+        $pcm.config[:providers]['openstack'].delete('sizes')
+        $pcm.config[:clouds]['openstack0'].delete('sizes')
+        $pcm.config[:providers]['openstack'].delete('images')
+        $pcm.config[:clouds]['openstack0'].delete('images')
+    end
+
+    describe "#id_of" do
+        context "for size" do
+            before :each do
+                $flavor = $os.fog.flavors.get("6")
+            end
+
+            it "returns flavor id when using no translation" do
+                $os.id_of(:size, $flavor).should == "6"
+            end
+
+            it "accepts a field name for id field of size" do
+                $os.instance_eval do
+                    def size_id_field
+                        :name
+                    end
+                end
+            end
+
+            it "returns flavor id when using field translation (name)" do
+                $os.instance_eval do
+                    def size_id_field
+                        :name
+                    end
+                end
+                $os.id_of(:size, $flavor).should == "8GB server"
+            end
+
+            it "returns block value when using block translation (concat)" do
+                $os.instance_eval do
+                    def size_id_field
+                        lambda { |flavor| flavor.id + "/" + flavor.name }
+                    end
+                end
+                $os.id_of(:size, $flavor).should == "6/8GB server"
+            end
+
+            it "returns mapped flavor id when using mapping" do
+                $pcm.config[:clouds]['openstack0']['sizes'] ||= { }
+                $pcm.config[:clouds]['openstack0']['sizes']['testsize'] = "6"
+                $os.id_of(:size, $flavor).should == "testsize"
+            end
+
+            it "uses mapping from provider configuration" do
+                $pcm.config[:providers]['openstack']['sizes'] = {
+                    'testsize' => '6'
+                }
+                $os.id_of(:size, $flavor).should == 'testsize'
+            end
+
+            it "uses a map with cloud-precedence over provider" do
+                $pcm.config[:providers]['openstack']['sizes'] =
+                    { 'testsize0' => '6' }
+                $pcm.config[:clouds]['openstack0']['sizes'] =
+                    { 'testsize1' => '6' }
+                $os.id_of(:size, $flavor).should == 'testsize1'
+            end
+
+            it "returns id from mapped flavor name when " +
+                "using translation and mapping" do
+                $os.instance_eval do
+                    def size_id_field
+                        :name
+                    end
+                end
+                $pcm.config[:clouds]['openstack0']['sizes'] = {
+                    'testsize' => '8GB server'
+                }
+                $os.id_of(:size, $flavor).should == "testsize"
+            end
+
+        end
+
+        context "for image" do
+
+            before :each do
+                $provider_image_id = "0e09fbd6-43c5-448a-83e9-0d3d05f9747e"
+                $provider_image_name = "cirros-0.3.0-x86_64-blank"
+                $provider_image = $os.fog.images.get($provider_image_id)
+            end
+
+            it "returns image id when using no translation" do
+                obj_id = $os.id_of(:image, $provider_image)
+                puts "failed to clear" if $os.respond_to? :image_id_field
+                obj_id.should == $provider_image_id
+            end
+
+        end
+
+    end
+
+    describe "#get_provider_object" do
+
+        context "for size" do
+
+            it "returns the correct flavor when using no translation" do
+                $os.get_provider_object(:size => "6").
+                    name.should == "8GB server"
+            end
+
+            it "returns the correct flavor when using field translation" do
+                $os.instance_eval do
+                    def size_id_field
+                        :name
+                    end
+                end
+                $os.get_provider_object(:size => "8GB server").
+                    id.should == "6"
+            end
+
+            it "returns the correct flavor when using block translation" do
+                $os.instance_eval do
+                    def size_id_field
+                        lambda { |flavor| flavor.name }
+                    end
+                end
+                $os.get_provider_object(:size => "8GB server").
+                    id.should == "6"
+            end
+
+            it "returns a mapped flavor when using mapping" do
+                $pcm.config[:clouds]['openstack0']['sizes'] =
+                    { 'testsize' => '6' }
+                flavor = $os.get_provider_object(:size => "testsize")
+                flavor.id.should == "6"
+                flavor.name.should == "8GB server"
+            end
+
+            it "returns correct flavor when using mapping " +
+                "and translation" do
+                $pcm.config[:clouds]['openstack0']['sizes'] =
+                    { 'testsize' => '6' }
+                $os.instance_eval do
+                    def size_id_field
+                        :name
+                    end
+                end
+                $os.get_provider_object(:size => "8GB server").
+                    id.should == "6"
+            end
+
+        end
+
+        context "for image" do
+
+            it "returns the correct image when using field translation" do
+                $os.instance_eval do
+                    def image_id_field
+                        :name
+                    end
+                end
+                $os.get_provider_object(:image => $provider_image_name).
+                    id.should == $provider_image_id
+            end
+
+        end
+
+    end
+
+    describe "#map_from_raw_provider_id" do
+
+    end
+
+    describe "#object_of" do
+        before(:each) do
+            $flavor = $os.fog.flavors.get("6")
+        end
+
+        context "for size" do
+
+            it "returns a basic hash when using no translation" do
+                $os.object_of(:size, $flavor)["name"].should == "8GB server"
+            end
+
+            it "returns a hash with appropriate id when using field trans" do
+                $os.instance_eval do
+                    def size_id_field
+                        :name
+                    end
+                end
+                obj = $os.object_of(:size, $flavor)
+                obj["id"].should == "8GB server"
+                obj["name"].should == "8GB server"
+                obj["provider_id"].should == "6"
+            end
+
+            it "returns a hash with appropriate id when using block trans" do
+                $os.instance_eval do
+                    def size_id_field
+                        lambda { |flavor| flavor.name }
+                    end
+                end
+                $os.object_of(:size, $flavor)["id"].
+                    should == "8GB server"
+            end
+
+            it "returns a basic hash when using generic translator" do
+                $os.instance_eval do
+                    def translate_size(flavor)
+                        generic_translate(:size, flavor)
+                    end
+                end
+                obj = $os.object_of(:size, $flavor)
+                obj['id'].should == "6"
+                obj['name'].should == "8GB server"
+            end
+
+            it "returns a rich hash when using more translation" do
+                $os.instance_eval do
+                    def size_id_field
+                        :name
+                    end
+
+                    def translate_size(flavor)
+                        { 'id' => flavor.name,
+                            'name' => flavor.name,
+                            'provider_id' => flavor.id,
+                            'ram' => flavor.ram,
+                            'cores' => flavor.vcpus,
+                            'disk' => flavor.ephemeral + flavor.disk }
+                    end
+                end
+                obj = $os.object_of(:size, $flavor)
+                obj['id'].should == "8GB server"
+                obj['name'].should == "8GB server"
+                obj['provider_id'].should == "6"
+                obj['ram'].should == 8192
+                obj['cores'].should == 16
+                obj['disk'].should == 321
+            end
+
+            it "returns a correct abstract object when using mapping" do
+                $pcm.config[:clouds]['openstack0']['sizes'] = {
+                    'testsize' => '6' }
+                obj = $os.object_of(:size, $flavor)
+                obj['id'].should == "testsize"
+                obj['name'].should == "8GB server"
+                obj['provider_id'].should == "6"
+            end
+
+        end
+
+        context "with nonexistent objects" do
+            before :all do
+                $aws.fog.register_image('testimg9', 'testimg9', '/dev/sda')
+                $aws_image = $aws.fog.images.find do |i|
+                    i.name == 'testimg9'
+                end
+            end
+
+            it "returns unmapped abstract object" do
+                obj = $aws.object_of(:image, $aws_image)
+                obj['id'].should == $aws_image.id
+            end
+
+        end
+
+        context "for size" do
+
+            it "returns a correct abstract object when using mapping" do
+                $pcm.config[:clouds]['openstack0']['images'] = {
+                    'testimg' => $provider_image_id
+                }
+                obj = $os.object_of(:image, $provider_image)
+                obj['id'].should == 'testimg'
+                obj['name'].should == $provider_image_name
+                obj['provider_id'].should == $provider_image_id
+            end
+
+        end
+
+    end
+
+    describe "#map_from_raw_provider_id" do
+
+        context "in OpenStack" do
+
+            context "for size" do
+                before :each do
+                    $flavor = $os.fog.flavors.get("6")
+                end
+
+                it "returns abstract id when using no translation" do
+                    $os.map_from_raw_provider_id(:size, $flavor.id).
+                        should == "6"
+                end
+
+                it "returns flavor id when using field translation (name)" do
+                    $os.instance_eval do
+                        def size_id_field
+                            :name
+                        end
+                    end
+                    $os.map_from_raw_provider_id(:size, $flavor.id).
+                        should == '8GB server'
+                end
+
+                it "returns abstract id when using mapping" do
+                    $pcm.config[:clouds]['openstack0']['sizes'] = {
+                        'm1.xlarge' => '6'
+                    }
+                    $os.map_from_raw_provider_id(:size, $flavor.id).
+                        should == 'm1.xlarge'
+                end
+
+                it "returns abstract id when using mapping and translation" do
+                    $os.instance_eval do
+                        def size_id_field
+                            :name
+                        end
+                    end
+                    $pcm.config[:clouds]['openstack0']['sizes'] = {
+                        'm1.xlarge' => '8GB server'
+                    }
+                    $os.map_from_raw_provider_id(:size, $flavor.id).
+                        should == 'm1.xlarge'
+                end
+
+            end
+
+        end
+
+    end
+
+end

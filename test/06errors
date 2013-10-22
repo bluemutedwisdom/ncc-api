@@ -1,0 +1,70 @@
+#!/usr/bin/env rspec
+# -*- mode: ruby -*-
+
+$LOAD_PATH.unshift '/opt/pptools'
+require 'ppenv'
+
+require 'pcm_spec_helper'
+require 'pcm'
+require 'ppinventory'
+
+Fog.mock!
+PPInventory.mock!
+
+describe "PCM::Error" do
+
+    describe ".new" do
+
+        subject { PCM::Error.new("error message") }
+        it { should be_a StandardError }
+        it { should be_a PCM::Error }
+
+    end
+
+end
+
+describe "PCM" do
+
+    before :all do
+        setup_fixture
+        $logger = LogCatcher.new
+        $pcm = PCM.new('test/data/etc')
+    end
+
+    after :all do
+        cleanup_fixture
+    end
+
+    describe "#images" do
+
+        it "raises PCM::Error::NotFound for nonexistent image" do
+            expect {
+                $pcm.images('foo')
+            }.to raise_error PCM::Error::NotFound
+        end
+
+    end
+
+    describe "#sizes" do
+
+        it "raises PCM::Error::NotFound for nonexistent size" do
+            expect {
+                $pcm.sizes('foo')
+            }.to raise_error PCM::Error::NotFound
+        end
+
+    end
+
+    describe "#clouds" do
+
+        it "raises PCM::Error::NotFound for nonexistent cloud" do
+
+            expect {
+                $pcm.clouds('foo')
+            }.to raise_error PCM::Error::NotFound
+
+        end
+
+    end
+
+end

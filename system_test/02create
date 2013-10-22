@@ -1,0 +1,59 @@
+#!/usr/bin/env rspec
+# -*- mode: ruby -*-
+
+$LOAD_PATH.unshift '/opt/pptools'
+require 'ppenv'
+require 'ppinventory'
+
+require 'pcm_spec_helper'
+
+$pcmapi_url = ENV['PCMAPI_URL'] || 'http://pcm-api:8899/pcm_api/v2'
+
+$test_spec = File.open('system_test/test_spec.json') do |fh|
+            JSON.parse fh.read
+        end
+
+$inv = PPInventory.new($test_spec)
+
+describe "pcm-api-v2" do
+
+    describe "create instance" do
+
+        $test_spec['clouds'].each do |cloud|
+
+            context "in #{cloud}" do
+
+                it "creates and destroys an instance" do
+
+                    reply = post "/clouds/#{cloud}/instances", {
+                        'size' => 'm1.small',
+                        'image' => 'centos5.6'
+                    }
+
+                    reply.status.should == 201
+                    instance = reply.data
+                    fqdn = instance['name']
+
+                    systems = $inv.query('system', "fqdn=#{fqdn}")
+                    systems.should be_an Array
+                    system = systems.first
+
+                    instance['name'].should == system['fqdn']
+                    instance['id'].should == system['serial_number']
+                    system['cloud'].should == cloud
+
+                    dreply = delete "/clouds/#{cloud}/instances/#{instance['id']}"
+                    dreply.status.should == 204
+
+                    systems = $inv.query('system', "fqdn=#{fqdn}")
+                    system = systems.first
+                    system['status'].should == 'decommissioned'
+                end
+
+            end
+
+        end
+
+    end
+
+end

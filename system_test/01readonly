@@ -1,0 +1,79 @@
+#!/usr/bin/env rspec
+# -*- mode: ruby -*-
+
+$LOAD_PATH.unshift '/opt/pptools'
+require 'ppenv'
+
+require 'pcm_spec_helper'
+
+$pcmapi_url = ENV['PCMAPI_URL'] || 'http://pcm-api:8899/pcm_api/v2'
+
+$test_spec = File.open('system_test/test_spec.json') do |fh|
+            JSON.parse fh.read
+        end
+
+describe "pcm-api-v2" do
+
+    it "returns a list of clouds" do
+        reply = get '/clouds'
+        reply.status.should == 200
+        $test_spec['clouds'].each do |cloud|
+            reply.data.should include cloud
+        end
+    end
+
+    it "returns a list of images" do
+        reply = get '/images'
+        reply.status.should == 200
+        reply.data.should be_a Array
+    end
+
+    describe "/clouds" do
+
+        $test_spec['clouds'].each do |cloud|
+
+            context "in #{cloud}" do
+
+                $test_spec['images'][cloud].each do |image, comparator|
+
+                    it "describes an image using [#{comparator.keys.join(',')}]" do
+                        reply = get "/clouds/#{cloud}/images/#{image}"
+                        reply.status.should == 200
+                        comparator.keys.each do |field|
+                            reply.data[field].should == comparator[field]
+                        end
+                    end
+
+                end
+
+                $test_spec['sizes'][cloud].each do |size, comparator|
+
+                    it "describes a size using [#{comparator.keys.join(',')}]" do
+                        reply = get "/clouds/#{cloud}/sizes/#{size}"
+                        reply.status.should == 200
+                        comparator.keys.each do |field|
+                            reply.data[field].should == comparator[field]
+                        end
+                    end
+
+                end
+
+                $test_spec['instances'][cloud].each do |instance, comparator|
+
+                    it "describes an instance using [#{comparator.keys.join(',')}]" do
+                        reply = get "/clouds/#{cloud}/instances/#{instance}"
+                        reply.status.should == 200
+                        comparator.keys.each do |field|
+                            reply.data[field].should == comparator[field]
+                        end
+                    end
+
+                end
+
+            end
+
+        end
+
+    end
+
+end

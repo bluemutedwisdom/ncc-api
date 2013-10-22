@@ -1,0 +1,29 @@
+{ "clouds": ["openstack_cloud", "awslabcloud"],
+  "abstract_images": { "centos5.6": { "osfamily": "RedHat" } },
+  "abstract_sizes": { "m1.medium": { "cores": 2 } },
+  "images": {
+		"openstack_cloud": { "centos5.6": { "id": "centos5.6" } },
+		"awslabcloud": { "centos5.6": { "id": "centos5.6" } }
+  },
+  "sizes": {
+		"openstack_cloud": { "m1.medium": { "cores": 2 } },
+		"awslabcloud": { "m1.medium": { "cores": 2 } }
+  },
+  "instances": {
+		"awslabcloud": {
+			 "i-deadbeef": {
+				  "status": "active"
+			 }
+		},
+		"openstack_cloud": {
+			 "73a7db87-693e-4e40-90bf-61949009a2e6": {
+				  "status": "active"
+			 }
+		}
+  },
+  "inventory": {
+  		"url": "http://cmdb/inv_api/v1",
+		"username": "testuser",
+		"password": "nonsense"
+  }
+}

@@ -1,0 +1,134 @@
+#!/usr/bin/env rspec
+# -*- mode: ruby -*-
+
+$LOAD_PATH.unshift '/opt/pptools'
+require 'ppenv'
+
+require 'pcm_spec_helper'
+require 'rubygems'
+require 'pcm'
+require 'fog'
+
+Fog.mock!
+
+describe PCM do
+
+    before(:all)  { setup_fixture }
+    after(:all)   { cleanup_fixture }
+    before:each do
+        $logger = LogCatcher.new
+        $pcm = PCM.new('test/data/etc', :logger => $logger)
+    end
+
+    describe '.new' do
+        specify { $pcm.should be_a PCM }
+    end
+
+    describe '#config' do
+        specify { $pcm.config.should be_a PCM::Config }
+    end
+
+    describe '#clouds' do
+        specify { $pcm.clouds.should have(2).items }
+        specify { $pcm.clouds('awscloud').should be_a PCM::Connection }
+        specify { $pcm.clouds('awscloud').object_id.should ==
+            $pcm.clouds('awscloud').object_id }
+    end
+
+    describe '#sizes' do
+        specify { $pcm.sizes.should have(7).items }
+        specify { $pcm.sizes('m1.xlarge')['cores'].should == 8 }
+        specify do
+            $pcm.sizes(
+                 'm1.xlarge')['description'].
+                should == "8CPU 16GB RAM 400GB disk"
+        end
+
+        context "accessing AWS" do
+
+            it "should report abstract sizes" do
+                $pcm.clouds('awscloud').sizes.should be_a Array
+                $pcm.clouds('awscloud').sizes('m1.xlarge').should be_a Hash
+                $pcm.clouds('awscloud').sizes('m1.xlarge')['cores'].should == 8
+                $pcm.clouds(
+                     'awscloud').sizes(
+                                 'm1.xlarge')['description'].
+                    should == "Extra Large Instance"
+                $pcm.clouds('awscloud').
+                    sizes('m1.xlarge')['price'].should == 360
+                $pcm.clouds('awscloud').
+                    sizes('m1.xlarge')['special'].should == 'true'
+            end
+
+        end
+
+        context "accessing OpenStack" do
+
+            it "reports abstract sizes" do
+                $pcm.clouds('openstack0').sizes.should be_a Array
+                $pcm.clouds('openstack0').sizes('m1.large').should be_a Hash
+                $pcm.clouds('openstack0').
+                    sizes('m1.medium')['cores'].should == 8
+                $pcm.clouds(
+                     'openstack0').sizes(
+                                   'm1.medium')['description'].
+                    should == "8CPU 4GB RAM 161GB disk"
+                $pcm.clouds('openstack0').
+                    sizes('m1.medium')['price'].should == 16
+            end
+
+        end
+    end
+
+    describe "#images" do
+        specify { $pcm.images.should have(3).items }
+        specify { $pcm.images.should be_a Array }
+        specify { $pcm.images('centos5.6')['osfamily'].should == 'RedHat' }
+
+        before :all do
+            $image_id = { }
+            ['awscloud'].each do |cloud|
+                $pcm.clouds(cloud).fog.
+                    register_image('testimg', 'testimg', '/dev/sda0')
+                image = $pcm.clouds(cloud).
+                    fog.images.find { |i| i.name == 'testimg' }
+                $image_id[cloud] = image.id
+                p = $pcm.clouds(cloud).provider
+                conf = $pcm.config[:providers][p].to_hash
+                conf['images']['centos5.6'] = $image_id[cloud]
+                File.open("test/data/etc/providers/#{p}.conf", 'w') do |fh|
+                    fh << JSON.pretty_generate(conf)
+                end
+                $pcm.config[:providers][p].update_config
+            end
+        end
+
+        context "accessing AWS" do
+
+            it "should report abstract images" do
+                $pcm.clouds('awscloud').images.should be_a Array
+                $pcm.clouds('awscloud').images('centos5.6').should be_a Hash
+                $pcm.clouds('awscloud').
+                    images('centos5.6')['provider_id'].should ==
+                    $image_id['awscloud']
+                $pcm.clouds('awscloud').
+                    images('centos5.6')['osfamily'].should == 'RedHat'
+            end
+
+        end
+
+        context "accessing OpenStack" do
+
+            it "should report abstract images" do
+                $pcm.clouds('openstack0').images.should be_a Array
+                $pcm.clouds('openstack0').
+                    images('centos5.6').should be_a Hash
+                $pcm.clouds('openstack0').
+                    images('centos5.6')['osfamily'].should == 'RedHat'
+            end
+
+        end
+
+    end
+
+end

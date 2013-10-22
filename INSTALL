@@ -1,0 +1,6 @@
+Installation Instructions (basic)
+
+* Install dependencies (see 'deps' for gem hints)
+* Copy lib/*.rb to a Ruby library location
+* Copy pcm-api to bin location
+* Copy and configure config.ru and unicorn config appopriately

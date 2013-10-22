@@ -1,0 +1,61 @@
+#!/bin/bash
+# /* Copyright 2013 Proofpoint, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# */
+
+
+app_path="${1:-$(dirname $0)/..}"
+launchwith="${2:-rackup}"
+rack_environment="${3:-development}"
+
+for f in etc/pcm-api.ru lib/pcm.rb
+do
+   if [ ! -f "$app_path/$f" ]
+   then
+      echo "Required file $app_path/$f not found" >&2
+      exit 1
+   fi
+done
+
+export PCMAPI_HOME="$app_path"
+
+if [ "$launchwith" = rackup ]
+then
+    # Rackup-based launch (default)
+    rackup="${RACKUP_PATH:-rackup}"
+
+    if [ ! -x "$rackup" ]
+    then
+        echo "Can't find rackup (no $rackup)" >&2
+        exit 2
+    fi
+
+    echo "$rackup" -p 9292 -I"$app_path/lib" -E "$rack_environment" "$app_path/etc/pcm-api.ru"
+    "$rackup" -p 9292 -I"$app_path/lib" -E "$rack_environment" "$app_path/etc/pcm-api.ru"
+elif [ "$launchwith" = unicorn ]
+then
+    unicorn="${UNICORN_PATH:-unicorn}"
+
+    if [ ! -x "$unicorn" ]
+    then
+        echo "Can't find unicorn (no $unicorn)" >&2
+        exit 2
+    fi
+    echo "$unicorn" -I"$app_path/lib" -D -E "$rack_environment" -c "$app_path/etc/unicorn.cfg" "$app_path/etc/pcm-api.ru"
+    "$unicorn" -I"$app_path/lib" -D -E "$rack_environment" -c "$app_path/etc/unicorn.cfg" "$app_path/etc/pcm-api.ru"
+else
+    # TODO: Need to specify environment here
+    echo "Can't launch with $launchwith" >&2
+    exit 3
+fi

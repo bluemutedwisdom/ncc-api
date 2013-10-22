@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export PCMAPI_HOME=/opt/proofpoint/pcm-api-v2
+/opt/proofpoint/ruby/bin/irb -rubygems -rjson -rfog \
+    -I${PCMAPI_HOME}/lib -rpcm
