@@ -2,19 +2,19 @@
 # -*- mode: ruby -*-
 
 require 'fileutils'
-require 'pcm_spec_helper'
-require 'pcm'
+require 'ncc_spec_helper'
+require 'ncc'
 
 Fog.mock!
 CMDBclient.mock!
 
-describe PCM::Connection do
+describe NCC::Connection do
     before(:all) { setup_fixture }
     after(:all) { cleanup_fixture }
 
     before :all do
         $logger = LogCatcher.new
-        $pcm = PCM.new('test/data/etc')
+        $ncc = NCC.new('test/data/etc')
     end
 
     {'awscloud' => 'AWS', 'openstack0' => 'OpenStack'}.each do |cloud, provider|
@@ -22,10 +22,10 @@ describe PCM::Connection do
         context "in #{provider}" do
 
             it "establishes a new connection when config changes" do
-                fog_id0 = $pcm.clouds(cloud).fog.object_id
+                fog_id0 = $ncc.clouds(cloud).fog.object_id
                 sleep 2
                 FileUtils.touch "test/data/etc/clouds/#{cloud}.conf"
-                fog_id1 = $pcm.clouds(cloud).fog.object_id
+                fog_id1 = $ncc.clouds(cloud).fog.object_id
                 fog_id0.should_not == fog_id1
             end
 

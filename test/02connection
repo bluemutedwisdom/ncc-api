@@ -1,23 +1,23 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
+require 'ncc_spec_helper'
 require 'rubygems'
-require 'pcm'
+require 'ncc'
 require 'fog'
 
 Fog.mock!
 
-describe PCM::Connection do
+describe NCC::Connection do
 
     before :all do
         setup_fixture
-        $pcm = PCM.new('test/data/etc')
-        $cfg = $pcm.config
-        $pcm.clouds('awscloud').fog.
+        $ncc = NCC.new('test/data/etc')
+        $cfg = $ncc.config
+        $ncc.clouds('awscloud').fog.
             register_image('testimg', 'testimg', '/dev/sda0')
-        aws_image_id = $pcm.clouds('awscloud').fog.images.first.id
-        $pcm.config[:clouds]['awscloud']['images'] = {
+        aws_image_id = $ncc.clouds('awscloud').fog.images.first.id
+        $ncc.config[:clouds]['awscloud']['images'] = {
             'centos5.6' => aws_image_id
         }
     end
@@ -27,18 +27,18 @@ describe PCM::Connection do
     describe ".connect" do
 
         before :each do
-            $os = PCM::Connection.connect($pcm, 'openstack0')
-            $aws = PCM::Connection.connect($pcm, 'awscloud')
+            $os = NCC::Connection.connect($ncc, 'openstack0')
+            $aws = NCC::Connection.connect($ncc, 'awscloud')
         end
 
         context "accessing AWS" do
-            specify { $aws.should be_a PCM::Connection }
-            specify { $aws.should be_a PCM::Connection::AWS }
+            specify { $aws.should be_a NCC::Connection }
+            specify { $aws.should be_a NCC::Connection::AWS }
             specify { $aws.fog.service.should be Fog::Compute::AWS }
         end
 
         context "accessing OpenStack" do
-            specify { $os.should be_a PCM::Connection::OpenStack }
+            specify { $os.should be_a NCC::Connection::OpenStack }
             specify { $os.fog.service.should be Fog::Compute::OpenStack }
         end
     end

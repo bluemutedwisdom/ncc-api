@@ -1,31 +1,31 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
-require 'pcm'
+require 'ncc_spec_helper'
+require 'ncc'
 require 'cmdbclient'
 
 Fog.mock!
 CMDBclient.mock!
 
-describe "PCM::Error" do
+describe "NCC::Error" do
 
     describe ".new" do
 
-        subject { PCM::Error.new("error message") }
+        subject { NCC::Error.new("error message") }
         it { should be_a StandardError }
-        it { should be_a PCM::Error }
+        it { should be_a NCC::Error }
 
     end
 
 end
 
-describe "PCM" do
+describe "NCC" do
 
     before :all do
         setup_fixture
         $logger = LogCatcher.new
-        $pcm = PCM.new('test/data/etc')
+        $ncc = NCC.new('test/data/etc')
     end
 
     after :all do
@@ -34,31 +34,31 @@ describe "PCM" do
 
     describe "#images" do
 
-        it "raises PCM::Error::NotFound for nonexistent image" do
+        it "raises NCC::Error::NotFound for nonexistent image" do
             expect {
-                $pcm.images('foo')
-            }.to raise_error PCM::Error::NotFound
+                $ncc.images('foo')
+            }.to raise_error NCC::Error::NotFound
         end
 
     end
 
     describe "#sizes" do
 
-        it "raises PCM::Error::NotFound for nonexistent size" do
+        it "raises NCC::Error::NotFound for nonexistent size" do
             expect {
-                $pcm.sizes('foo')
-            }.to raise_error PCM::Error::NotFound
+                $ncc.sizes('foo')
+            }.to raise_error NCC::Error::NotFound
         end
 
     end
 
     describe "#clouds" do
 
-        it "raises PCM::Error::NotFound for nonexistent cloud" do
+        it "raises NCC::Error::NotFound for nonexistent cloud" do
 
             expect {
-                $pcm.clouds('foo')
-            }.to raise_error PCM::Error::NotFound
+                $ncc.clouds('foo')
+            }.to raise_error NCC::Error::NotFound
 
         end
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
+require 'ncc_spec_helper'
 require 'cmdbclient'
-require 'pcm'
+require 'ncc'
 
 Fog.mock!
 CMDBclient.mock!
@@ -18,42 +18,42 @@ def inv_get(inv, fqdn)
     inv.query('system', 'fqdn=' + fqdn).first
 end
 
-describe PCM do
+describe NCC do
 
     before(:all) { setup_fixture }
     after(:all) { cleanup_fixture }
 
     before :all do
-        $pcm = PCM.new('test/data/etc')
+        $ncc = NCC.new('test/data/etc')
     end
 
     describe "#inventory" do
 
         it "returns a CMDBclient object" do
-            $pcm.inventory.should be_a CMDBclient
+            $ncc.inventory.should be_a CMDBclient
         end
 
     end
 
 end
 
-describe PCM::Instance do
+describe NCC::Instance do
 
     before(:all) { setup_fixture }
     after(:all) { cleanup_fixture }
 
     before :all do
         $logger = LogCatcher.new
-        $pcm = PCM.new('test/data/etc', :logger => $logger)
-        $pcm.clouds('awscloud').fog.
+        $ncc = NCC.new('test/data/etc', :logger => $logger)
+        $ncc.clouds('awscloud').fog.
             register_image('testimg', 'testimg', '/dev/sda')
-        image_id = $pcm.clouds('awscloud').fog.images.first
-        $pcm.config[:clouds]['awscloud']['images'] = { 'centos5.6' => image_id }
+        image_id = $ncc.clouds('awscloud').fog.images.first
+        $ncc.config[:clouds]['awscloud']['images'] = { 'centos5.6' => image_id }
     end
 
     describe "#to_hash" do
         before :all do
-            $instance = PCM::Instance.new($pcm.config, {
+            $instance = NCC::Instance.new($ncc.config, {
                                               'id' => 'i-deadbeef',
                                               'name' => 'test-server-0',
                                               'size' => 'm1.medium',
@@ -69,25 +69,25 @@ describe PCM::Instance do
 
 end
 
-describe PCM::Connection do
+describe NCC::Connection do
 
     before(:all) { setup_fixture }
     after(:all) { cleanup_fixture }
 
     before :all do
         $logger = LogCatcher.new
-        $pcm = PCM.new('test/data/etc', :logger => $logger)
-        $pcm.clouds('awscloud').fog.
+        $ncc = NCC.new('test/data/etc', :logger => $logger)
+        $ncc.clouds('awscloud').fog.
             register_image('testimg', 'testimg', '/dev/sda')
-        $aws_image_id = $pcm.clouds('awscloud').fog.images.first.id
-        $pcm.config[:clouds]['awscloud']['images'] = {
+        $aws_image_id = $ncc.clouds('awscloud').fog.images.first.id
+        $ncc.config[:clouds]['awscloud']['images'] = {
             'centos5.6' => $aws_image_id }
     end
 
     describe "#provider_request" do
 
         before :each do
-            $instance = PCM::Instance.new($pcm.config,
+            $instance = NCC::Instance.new($ncc.config,
                                       'name' => 'test-server-0',
                                       'size' => 'm1.medium',
                                       'extra' => {
@@ -100,7 +100,7 @@ describe PCM::Connection do
         context "in AWS" do
 
             before :each do
-                $request = $pcm.clouds('awscloud').provider_request($instance)
+                $request = $ncc.clouds('awscloud').provider_request($instance)
             end
 
             it "produces provider-specific fields" do
@@ -115,19 +115,19 @@ describe PCM::Connection do
             end
 
             it "merges in cloud configuration" do
-                $pcm.config[:clouds]['awscloud']['defaults'] =
+                $ncc.config[:clouds]['awscloud']['defaults'] =
                     { 'extra' => { 'aws' => { 'subnet_id' => 'subnet-123' } }
                 }
-                request = $pcm.clouds('awscloud').provider_request($instance)
+                request = $ncc.clouds('awscloud').provider_request($instance)
                 request[:subnet_id].should == 'subnet-123'
             end
 
             it "merges in provider configuration" do
-                $pcm.config[:clouds]['awscloud'].delete('defaults')
-                $pcm.config[:providers]['aws']['defaults'] =
+                $ncc.config[:clouds]['awscloud'].delete('defaults')
+                $ncc.config[:providers]['aws']['defaults'] =
                     { 'extra' => { 'aws' => { 'subnet_id' => 'subnet-345' } }
                 }
-                request = $pcm.clouds('awscloud').provider_request($instance)
+                request = $ncc.clouds('awscloud').provider_request($instance)
                 request[:subnet_id].should == 'subnet-345'
             end
 
@@ -136,8 +136,8 @@ describe PCM::Connection do
         context "in OpenStack" do
 
             before :each do
-                $request = $pcm.clouds('openstack0').provider_request($instance)
-                $os_image_id = $pcm.clouds('openstack0').fog.images.first.id
+                $request = $ncc.clouds('openstack0').provider_request($instance)
+                $os_image_id = $ncc.clouds('openstack0').fog.images.first.id
             end
 
             it "produces provider-specific fields" do
@@ -151,7 +151,7 @@ describe PCM::Connection do
                         'os_scheduler_hints' => { 'same_host' =>
                             ['deadbeef'] } } }
                 request =
-                    $pcm.clouds('openstack0').provider_request($instance)
+                    $ncc.clouds('openstack0').provider_request($instance)
                 request[:os_scheduler_hints].should == {
                     :same_host => ['deadbeef'] }
             end
@@ -166,12 +166,12 @@ describe PCM::Connection do
     # that could include event posting, &c. -jbrinkley/20130412
     describe "#inventory_request" do
         before :each do
-            $instance = PCM::Instance.new($pcm.config,
+            $instance = NCC::Instance.new($ncc.config,
                                       'id' => 'i-deadbeef',
                                       'name' => 'test-server-0',
                                       'size' => 'm1.medium',
                                       'environment' => 'lab',
-                                      'role' => ['pcm-api-v2::role',
+                                      'role' => ['ncc-api-v2::role',
                                               'core::build'],
                                       'host' => 'm0002299',
                                       'ip_address' => '10.0.0.2',
@@ -186,13 +186,13 @@ describe PCM::Connection do
         end
 
         it "returns a system hash" do
-            $pcm.config[:clouds]['awscloud']['defaults'] =
+            $ncc.config[:clouds]['awscloud']['defaults'] =
                 { 'image' => 'centos5.6' }
-            system = $pcm.clouds('awscloud').inventory_request($instance)
+            system = $ncc.clouds('awscloud').inventory_request($instance)
             system['fqdn'].should == 'test-server-0'
             system['serial_number'].should == 'i-deadbeef'
             system['environment_name'].should == 'lab'
-            system['roles'].should == 'core::build,pcm-api-v2::role'
+            system['roles'].should == 'core::build,ncc-api-v2::role'
             system['image'].should == 'centos5.6'
             system['size'].should == 'm1.medium'
             system['created_by'].should == 'user0'
@@ -207,10 +207,10 @@ describe PCM::Connection do
         context "in AWS" do
 
             before :all do
-                $instance = PCM::Instance.new($pcm.config,
+                $instance = NCC::Instance.new($ncc.config,
                                           'size' => 'm1.medium',
                                           'environment' => 'lab',
-                                          'role' => 'pcm-api-v2::role',
+                                          'role' => 'ncc-api-v2::role',
                                           'extra' => {
                                                   'inventory' => {
                                                       'created_by' => 'user0'
@@ -220,12 +220,12 @@ describe PCM::Connection do
             end
 
             before :each do
-                $pcm.clouds('awscloud').fog.servers.each { |s| s.destroy }
+                $ncc.clouds('awscloud').fog.servers.each { |s| s.destroy }
             end
 
             it "should create an instance" do
-                instance = $pcm.clouds('awscloud').create_instance($instance)
-                server = $pcm.clouds('awscloud').fog.servers.first
+                instance = $ncc.clouds('awscloud').create_instance($instance)
+                server = $ncc.clouds('awscloud').fog.servers.first
                 instance.id.should == server.id
                 instance.name.should == server.tags['Name']
                 instance.size.should == 'm1.medium'
@@ -242,14 +242,14 @@ describe PCM::Connection do
             end
 
             it "should update inventory" do
-                target_fqdn = next_name($pcm.inventory)
-                instance = $pcm.clouds('awscloud').create_instance($instance)
+                target_fqdn = next_name($ncc.inventory)
+                instance = $ncc.clouds('awscloud').create_instance($instance)
                 instance.name.should == target_fqdn
-                system = inv_get($pcm.inventory, target_fqdn)
+                system = inv_get($ncc.inventory, target_fqdn)
                 system['status'].should == 'building'
                 system['cloud'].should == 'awscloud'
                 system['environment_name'].should == 'lab'
-                system['roles'].should == 'pcm-api-v2::role'
+                system['roles'].should == 'ncc-api-v2::role'
                 system['image'].should == 'centos5.6'
                 system['size'].should == 'm1.medium'
                 system['serial_number'].should == instance.id
@@ -257,12 +257,12 @@ describe PCM::Connection do
             end
 
             it "should update inventory upon error" do
-                target_fqdn = next_name($pcm.inventory)
+                target_fqdn = next_name($ncc.inventory)
                 expect do
-                    instance = $pcm.clouds('awscloud').
+                    instance = $ncc.clouds('awscloud').
                         create_instance({ 'status' => 'nonexistent' })
-                end.to raise_error PCM::Error
-                system = $pcm.inventory.query('system',
+                end.to raise_error NCC::Error
+                system = $ncc.inventory.query('system',
                                         'fqdn=' + target_fqdn).first
                 system['status'].should == 'decommissioned'
             end

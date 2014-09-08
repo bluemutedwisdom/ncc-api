@@ -1,11 +1,11 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
-require 'pcm/config'
+require 'ncc_spec_helper'
+require 'ncc/config'
 require 'fileutils'
 
-describe PCM::Config do
+describe NCC::Config do
 
     context "initializing" do
 
@@ -13,28 +13,28 @@ describe PCM::Config do
 
         after(:all)  { cleanup_fixture }
 
-        it "creates a PCM::Config object" do
-            pcm = PCM::Config.new('test/data/etc')
-            pcm.should be_an_instance_of PCM::Config
+        it "creates a NCC::Config object" do
+            ncc = NCC::Config.new('test/data/etc')
+            ncc.should be_an_instance_of NCC::Config
         end
 
         it "is current" do
             set_testvalue('testvalue0')
-            pcm = PCM::Config.new('test/data/etc/test.conf')
-            pcm.current?.should be_true
+            ncc = NCC::Config.new('test/data/etc/test.conf')
+            ncc.current?.should be_true
         end
 
         it "raises an ArgumentError when config doesn't exist" do
             lambda do
-                PCM::Config.new('nonexistent')
+                NCC::Config.new('nonexistent')
             end.should raise_error ArgumentError
         end
 
         it "parses a single file" do
             set_testvalue('testvalue0')
-            pcm = PCM::Config.new('test/data/etc/test.conf')
-            pcm.should have_key 'testkey'
-            pcm['testkey'].should == 'testvalue0'
+            ncc = NCC::Config.new('test/data/etc/test.conf')
+            ncc.should have_key 'testkey'
+            ncc['testkey'].should == 'testvalue0'
         end
 
     end
@@ -48,33 +48,33 @@ describe PCM::Config do
         before :each do
             set_testvalue('testvalue0')
             $logger = LogCatcher.new
-            $pcm = PCM::Config.new('test/data/etc/test.conf',
+            $ncc = NCC::Config.new('test/data/etc/test.conf',
                                :logger => $logger)
         end
 
         it "produces a hash" do
-            $pcm.to_hash.should be_an_instance_of Hash
+            $ncc.to_hash.should be_an_instance_of Hash
         end
 
         it "produces a hash with all the keys" do
-            $pcm.to_hash.should have_key 'testkey'
+            $ncc.to_hash.should have_key 'testkey'
         end
 
 
         it "updates when the file changes" do
             sleep 2
             set_testvalue('testvalue1')
-            $pcm['testkey'].should == 'testvalue1'
+            $ncc['testkey'].should == 'testvalue1'
         end
 
         it "doesn't update when within staleness_threshold" do
-            pcm = PCM::Config.new('test/data/etc/test.conf',
+            ncc = NCC::Config.new('test/data/etc/test.conf',
                               :staleness_threshold => 4)
             sleep 2
             set_testvalue('testvalue1')
-            pcm['testkey'].should == 'testvalue0'
+            ncc['testkey'].should == 'testvalue0'
             sleep 3
-            pcm['testkey'].should == 'testvalue1'
+            ncc['testkey'].should == 'testvalue1'
         end
 
         it "warns when file goes bad" do
@@ -83,14 +83,14 @@ describe PCM::Config do
                 fh << "bad json"
             end
 
-            $pcm['testkey'].should == 'testvalue0'
+            $ncc['testkey'].should == 'testvalue0'
             $logger['warn'][0].should match /not updating/
         end
 
         it "empties config if file goes away" do
             sleep 2
             FileUtils.rm 'test/data/etc/test.conf'
-            $pcm.should_not have_key 'testkey'
+            $ncc.should_not have_key 'testkey'
         end
 
     end
@@ -105,7 +105,7 @@ describe PCM::Config do
             set_testvalue 'testvalue0'
             FileUtils.mkdir 'test/data/etc/testdir'
             $logger = LogCatcher.new
-            $pcm = PCM::Config.new('test/data/etc',
+            $ncc = NCC::Config.new('test/data/etc',
                                :logger => $logger)
         end
 
@@ -119,54 +119,54 @@ describe PCM::Config do
         end
 
         it "creates a key for a file in the directory" do
-            $pcm.should have_key 'test'
+            $ncc.should have_key 'test'
         end
 
         it "stores a file-based config at the key named for the file" do
-            $pcm['test'].should have_key 'testkey'
-            $pcm['test']['testkey'].should == 'testvalue0'
+            $ncc['test'].should have_key 'testkey'
+            $ncc['test']['testkey'].should == 'testvalue0'
         end
 
         it "deletes a file-based config when the file goes away" do
             sleep 2
             FileUtils.rm 'test/data/etc/test.conf'
-            $pcm.should_not have_key 'test'
+            $ncc.should_not have_key 'test'
         end
 
         it "adds a file-based config when a new file shows up" do
             sleep 2
             set_testvalue('testvalue1', 'test2')
-            $pcm.should have_key 'test2'
-            $pcm['test2'].should be_an_instance_of PCM::Config
+            $ncc.should have_key 'test2'
+            $ncc['test2'].should be_an_instance_of NCC::Config
         end
 
         it "doesn't regenerate file-based subconfiguration" do
-            pcmsub = $pcm['test']
+            nccsub = $ncc['test']
             sleep 2
             set_testvalue('testvalue1', 'test2')
-            $pcm['test2'].should have_key 'testkey'
-            $pcm['test'].object_id.should == pcmsub.object_id
+            $ncc['test2'].should have_key 'testkey'
+            $ncc['test'].object_id.should == nccsub.object_id
         end
 
         it "stores a directory-based configuration for subdirectories" do
-            $pcm.should have_key :testdir
+            $ncc.should have_key :testdir
         end
 
         it "adds a file-based config when a new directory shows up" do
-            $pcm.should_not have_key :testdir2
+            $ncc.should_not have_key :testdir2
             sleep 2
             FileUtils.mkdir('test/data/etc/testdir2')
-            $pcm.should have_key :testdir2
+            $ncc.should have_key :testdir2
         end
 
         it "deletes a directory-based config when the directory goes away" do
             sleep 2
             FileUtils.rmdir 'test/data/etc/testdir'
-            $pcm.should_not have_key :testdir
+            $ncc.should_not have_key :testdir
         end
 
         it "produces a hash slice" do
-            h = $pcm.to_hash(:clouds, 'services')
+            h = $ncc.to_hash(:clouds, 'services')
             h.should have(2).items
             h.should have_key :clouds
             h.should have_key 'services'
@@ -183,7 +183,7 @@ describe PCM::Config do
             set_testvalue 'testvalue0'
             FileUtils.mkdir 'test/data/etc/testdir'
             $logger = LogCatcher.new
-            $pcm = PCM::Config.new('test/data/etc',
+            $ncc = NCC::Config.new('test/data/etc',
                                :logger => $logger)
         end
 
@@ -192,14 +192,14 @@ describe PCM::Config do
         end
 
         it "stores a value" do
-            $pcm['key'] = 'value'
-            $pcm['key'].should == 'value'
+            $ncc['key'] = 'value'
+            $ncc['key'].should == 'value'
         end
 
         it "deletes a value" do
-            $pcm['key'] = 'value'
-            $pcm.delete('key').should == 'value'
-            $pcm['key'].should be_nil
+            $ncc['key'] = 'value'
+            $ncc.delete('key').should == 'value'
+            $ncc['key'].should be_nil
         end
     end
 

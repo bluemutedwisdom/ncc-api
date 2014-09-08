@@ -1,21 +1,21 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
-require 'pcm'
+require 'ncc_spec_helper'
+require 'ncc'
 require 'cmdbclient'
 
 CMDBclient.mock!
 Fog.mock!
 
-describe PCM::Instance do
+describe NCC::Instance do
 
     before(:all)  { setup_fixture }
     after(:all) { cleanup_fixture }
 
     before :all do
-        $pcm = PCM.new('test/data/etc')
-        $cfg = $pcm.config
+        $ncc = NCC.new('test/data/etc')
+        $cfg = $ncc.config
 
         $req = {
             'size' => 'm1.medium',
@@ -29,25 +29,25 @@ describe PCM::Instance do
             'ip_address' => '10.0.0.2',
             'host' => 'm0002299'
         }
-        $instance = PCM::Instance.new($cfg, $inst_spec)
+        $instance = NCC::Instance.new($cfg, $inst_spec)
 
         $image_id = { }
         ['awscloud'].each do |cloud|
-            $pcm.clouds(cloud).fog.
+            $ncc.clouds(cloud).fog.
                 register_image('testimg', 'testimg', '/dev/sda0')
-            image = $pcm.clouds(cloud).
+            image = $ncc.clouds(cloud).
                 fog.images.find { |i| i.name == 'testimg' }
             $image_id[cloud] = image.id
-            p = $pcm.clouds(cloud).provider
-            conf = $pcm.config[:providers][p].to_hash
+            p = $ncc.clouds(cloud).provider
+            conf = $ncc.config[:providers][p].to_hash
             conf['images']['centos5.6'] = $image_id[cloud]
             File.open("test/data/etc/providers/#{p}.conf", 'w') do |fh|
                 fh << JSON.pretty_generate(conf)
             end
-            $pcm.config[:providers][p].update_config
+            $ncc.config[:providers][p].update_config
         end
 
-        $aws = $pcm.clouds('awscloud')
+        $aws = $ncc.clouds('awscloud')
         $aws_server = $aws.fog.servers.
             create(:image_id => $aws.images('centos5.6')['provider_id'],
             :flavor_id => $aws.sizes('m1.medium')['provider_id'],
@@ -58,8 +58,8 @@ describe PCM::Instance do
 
     describe ".new" do
 
-        subject { PCM::Instance.new($cfg, $inst_spec) }
-        it { should be_a PCM::Instance }
+        subject { NCC::Instance.new($cfg, $inst_spec) }
+        it { should be_a NCC::Instance }
 
         specify { $instance.name.should == 'testname' }
         specify { $instance.size.should == 'm1.medium' }
@@ -73,7 +73,7 @@ describe PCM::Instance do
     describe "#with_defaults" do
 
         before :each do
-            $instance = PCM::Instance.new($pcm.config,
+            $instance = NCC::Instance.new($ncc.config,
                                       'name' => 'testname',
                                       'size' => 'm1.medium')
         end
@@ -112,7 +112,7 @@ describe PCM::Instance do
 
         it "should raise error when setting invalid size" do
             expect { $instance.size = 'nonsense' }.
-                to raise_error PCM::Error, /Invalid size/
+                to raise_error NCC::Error, /Invalid size/
         end
     end
 
@@ -124,7 +124,7 @@ describe PCM::Instance do
 
         it "should raise error when setting invalid image" do
             expect { $instance.image = 'nonsense' }.
-                to raise_error PCM::Error, /Invalid image/
+                to raise_error NCC::Error, /Invalid image/
         end
     end
 
@@ -146,7 +146,7 @@ describe PCM::Instance do
 
         it "should raise error when setting something other than hash" do
             expect { $instance.extra = 'nonsense' }.
-                to raise_error PCM::Error, /Invalid extra/
+                to raise_error NCC::Error, /Invalid extra/
         end
     end
 
@@ -159,7 +159,7 @@ describe PCM::Instance do
 
         it "should raise error when setting invalid status" do
             expect { $instance.status = 'REVERT_RESIZE' }.
-                to raise_error PCM::Error, /Invalid status/
+                to raise_error NCC::Error, /Invalid status/
         end
 
     end
@@ -180,7 +180,7 @@ describe PCM::Instance do
         it "should reject fields not permitted to be set unvalidated" do
             expect do
                 $instance.set_without_validation(:status => 'REVERT_RESIZE')
-            end.to raise_error PCM::Error, /Invalid status/
+            end.to raise_error NCC::Error, /Invalid status/
         end
     end
 
@@ -206,7 +206,7 @@ describe PCM::Instance do
 
 end
 
-describe PCM do
+describe NCC do
 
     describe "#instances" do
 
@@ -214,22 +214,22 @@ describe PCM do
 
 end
 
-describe PCM::Connection do
+describe NCC::Connection do
 
     before(:all)  { setup_fixture }
     after(:all) { cleanup_fixture }
 
     before :all do
         $logger = LogCatcher.new
-        $pcm = PCM.new('test/data/etc', :logger => $logger)
-        $aws = $pcm.clouds('awscloud')
-        $os  = $pcm.clouds('openstack0')
+        $ncc = NCC.new('test/data/etc', :logger => $logger)
+        $aws = $ncc.clouds('awscloud')
+        $os  = $ncc.clouds('openstack0')
         $aws.fog.register_image('centos5.6-aws', 'centos5.6-aws', '/dev/sda0')
         $aws_image_id =
             $aws.fog.images.find { |i| i.name == 'centos5.6-aws' }.id
-        $pcm.config[:providers]['aws']['images']['centos5.6'] = $aws_image_id
+        $ncc.config[:providers]['aws']['images']['centos5.6'] = $aws_image_id
         $os_image_id = $os.fog.images.first.id
-        $pcm.config[:clouds]['openstack0']['images']['centos5.6'] =
+        $ncc.config[:clouds]['openstack0']['images']['centos5.6'] =
             $os_image_id
     end
 
@@ -288,7 +288,7 @@ describe PCM::Connection do
                 end
 
                 specify { $aws.fog.servers.should have(1).items }
-                specify { $instance.should be_a PCM::Instance }
+                specify { $instance.should be_a NCC::Instance }
                 specify { $instance.id.should == $aws_server.id }
                 specify { $instance.name.should == 'test-aws-server-0' }
                 specify { $instance.size.should == 'm1.medium' }

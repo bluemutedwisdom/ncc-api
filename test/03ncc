@@ -1,42 +1,42 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
+require 'ncc_spec_helper'
 require 'rubygems'
-require 'pcm'
+require 'ncc'
 require 'fog'
 
 Fog.mock!
 
-describe PCM do
+describe NCC do
 
     before(:all)  { setup_fixture }
     after(:all)   { cleanup_fixture }
     before:each do
         $logger = LogCatcher.new
-        $pcm = PCM.new('test/data/etc', :logger => $logger)
+        $ncc = NCC.new('test/data/etc', :logger => $logger)
     end
 
     describe '.new' do
-        specify { $pcm.should be_a PCM }
+        specify { $ncc.should be_a NCC }
     end
 
     describe '#config' do
-        specify { $pcm.config.should be_a PCM::Config }
+        specify { $ncc.config.should be_a NCC::Config }
     end
 
     describe '#clouds' do
-        specify { $pcm.clouds.should have(2).items }
-        specify { $pcm.clouds('awscloud').should be_a PCM::Connection }
-        specify { $pcm.clouds('awscloud').object_id.should ==
-            $pcm.clouds('awscloud').object_id }
+        specify { $ncc.clouds.should have(2).items }
+        specify { $ncc.clouds('awscloud').should be_a NCC::Connection }
+        specify { $ncc.clouds('awscloud').object_id.should ==
+            $ncc.clouds('awscloud').object_id }
     end
 
     describe '#sizes' do
-        specify { $pcm.sizes.should have(7).items }
-        specify { $pcm.sizes('m1.xlarge')['cores'].should == 8 }
+        specify { $ncc.sizes.should have(7).items }
+        specify { $ncc.sizes('m1.xlarge')['cores'].should == 8 }
         specify do
-            $pcm.sizes(
+            $ncc.sizes(
                  'm1.xlarge')['description'].
                 should == "8CPU 16GB RAM 400GB disk"
         end
@@ -44,16 +44,16 @@ describe PCM do
         context "accessing AWS" do
 
             it "should report abstract sizes" do
-                $pcm.clouds('awscloud').sizes.should be_a Array
-                $pcm.clouds('awscloud').sizes('m1.xlarge').should be_a Hash
-                $pcm.clouds('awscloud').sizes('m1.xlarge')['cores'].should == 8
-                $pcm.clouds(
+                $ncc.clouds('awscloud').sizes.should be_a Array
+                $ncc.clouds('awscloud').sizes('m1.xlarge').should be_a Hash
+                $ncc.clouds('awscloud').sizes('m1.xlarge')['cores'].should == 8
+                $ncc.clouds(
                      'awscloud').sizes(
                                  'm1.xlarge')['description'].
                     should == "Extra Large Instance"
-                $pcm.clouds('awscloud').
+                $ncc.clouds('awscloud').
                     sizes('m1.xlarge')['price'].should == 360
-                $pcm.clouds('awscloud').
+                $ncc.clouds('awscloud').
                     sizes('m1.xlarge')['special'].should == 'true'
             end
 
@@ -62,15 +62,15 @@ describe PCM do
         context "accessing OpenStack" do
 
             it "reports abstract sizes" do
-                $pcm.clouds('openstack0').sizes.should be_a Array
-                $pcm.clouds('openstack0').sizes('m1.large').should be_a Hash
-                $pcm.clouds('openstack0').
+                $ncc.clouds('openstack0').sizes.should be_a Array
+                $ncc.clouds('openstack0').sizes('m1.large').should be_a Hash
+                $ncc.clouds('openstack0').
                     sizes('m1.medium')['cores'].should == 8
-                $pcm.clouds(
+                $ncc.clouds(
                      'openstack0').sizes(
                                    'm1.medium')['description'].
                     should == "8CPU 4GB RAM 161GB disk"
-                $pcm.clouds('openstack0').
+                $ncc.clouds('openstack0').
                     sizes('m1.medium')['price'].should == 16
             end
 
@@ -78,37 +78,37 @@ describe PCM do
     end
 
     describe "#images" do
-        specify { $pcm.images.should have(3).items }
-        specify { $pcm.images.should be_a Array }
-        specify { $pcm.images('centos5.6')['osfamily'].should == 'RedHat' }
+        specify { $ncc.images.should have(3).items }
+        specify { $ncc.images.should be_a Array }
+        specify { $ncc.images('centos5.6')['osfamily'].should == 'RedHat' }
 
         before :all do
             $image_id = { }
             ['awscloud'].each do |cloud|
-                $pcm.clouds(cloud).fog.
+                $ncc.clouds(cloud).fog.
                     register_image('testimg', 'testimg', '/dev/sda0')
-                image = $pcm.clouds(cloud).
+                image = $ncc.clouds(cloud).
                     fog.images.find { |i| i.name == 'testimg' }
                 $image_id[cloud] = image.id
-                p = $pcm.clouds(cloud).provider
-                conf = $pcm.config[:providers][p].to_hash
+                p = $ncc.clouds(cloud).provider
+                conf = $ncc.config[:providers][p].to_hash
                 conf['images']['centos5.6'] = $image_id[cloud]
                 File.open("test/data/etc/providers/#{p}.conf", 'w') do |fh|
                     fh << JSON.pretty_generate(conf)
                 end
-                $pcm.config[:providers][p].update_config
+                $ncc.config[:providers][p].update_config
             end
         end
 
         context "accessing AWS" do
 
             it "should report abstract images" do
-                $pcm.clouds('awscloud').images.should be_a Array
-                $pcm.clouds('awscloud').images('centos5.6').should be_a Hash
-                $pcm.clouds('awscloud').
+                $ncc.clouds('awscloud').images.should be_a Array
+                $ncc.clouds('awscloud').images('centos5.6').should be_a Hash
+                $ncc.clouds('awscloud').
                     images('centos5.6')['provider_id'].should ==
                     $image_id['awscloud']
-                $pcm.clouds('awscloud').
+                $ncc.clouds('awscloud').
                     images('centos5.6')['osfamily'].should == 'RedHat'
             end
 
@@ -117,10 +117,10 @@ describe PCM do
         context "accessing OpenStack" do
 
             it "should report abstract images" do
-                $pcm.clouds('openstack0').images.should be_a Array
-                $pcm.clouds('openstack0').
+                $ncc.clouds('openstack0').images.should be_a Array
+                $ncc.clouds('openstack0').
                     images('centos5.6').should be_a Hash
-                $pcm.clouds('openstack0').
+                $ncc.clouds('openstack0').
                     images('centos5.6')['osfamily'].should == 'RedHat'
             end
 

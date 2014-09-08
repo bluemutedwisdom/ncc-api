@@ -1,12 +1,12 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
-require 'pcm'
+require 'ncc_spec_helper'
+require 'ncc'
 
 Fog.mock!
 
-$pcm_from_aws = {
+$ncc_from_aws = {
     'running' => 'active',
     'pending' => 'build',
     'terminated' => 'terminated',
@@ -14,7 +14,7 @@ $pcm_from_aws = {
     'stopping' => 'suspending',
     'stopped' => 'suspend'
 }
-$aws_from_pcm = {
+$aws_from_ncc = {
     'active' => 'running',
     'build' => 'pending',
     'terminated' => 'terminated',
@@ -28,7 +28,7 @@ $aws_from_pcm = {
     'unknown' => 'running',
     'needs-verify' => 'running'
 }
-$pcm_from_os = {
+$ncc_from_os = {
     'ACTIVE' => 'active',
     'BUILD' => 'build',
     'DELETED' => 'terminated',
@@ -45,7 +45,7 @@ $pcm_from_os = {
     'UNKNOWN' => 'unknown',
     'VERIFY_RESIZE' => 'needs-verify'
 }
-$os_from_pcm = {
+$os_from_ncc = {
     'active' => 'ACTIVE',
     'build' => 'BUILD',
     'terminated' => 'DELETED',
@@ -60,30 +60,30 @@ $os_from_pcm = {
     'needs-verify' => 'VERIFY_RESIZE'
 }
 
-describe "PCM::Connection" do
+describe "NCC::Connection" do
 
     before(:all) { setup_fixture }
     after(:all) { cleanup_fixture}
 
     before :all do
-        $pcm = PCM.new('test/data/etc')
-        $aws = $pcm.clouds('awscloud')
-        $os  = $pcm.clouds('openstack0')
+        $ncc = NCC.new('test/data/etc')
+        $aws = $ncc.clouds('awscloud')
+        $os  = $ncc.clouds('openstack0')
     end
 
     describe "#map_to_status" do
 
         context "in AWS" do
-            $pcm_from_aws.each_pair do |aws_status, pcm_status|
-                specify { $aws.map_to_status(aws_status).should == pcm_status }
+            $ncc_from_aws.each_pair do |aws_status, ncc_status|
+                specify { $aws.map_to_status(aws_status).should == ncc_status }
             end
             specify { $aws.map_to_status('nonsense').should == 'unknown' }
 
         end
 
         context "in OpenStack" do
-            $pcm_from_os.each_pair do |os_status, pcm_status|
-                specify { $os.map_to_status(os_status).should == pcm_status }
+            $ncc_from_os.each_pair do |os_status, ncc_status|
+                specify { $os.map_to_status(os_status).should == ncc_status }
             end
             specify { $os.map_to_status('nonsense').should == 'unknown' }
         end
@@ -93,9 +93,9 @@ describe "PCM::Connection" do
     describe "#map_to_provider_status" do
 
         context "in AWS" do
-            $aws_from_pcm.each_pair do |pcm_status, aws_status|
+            $aws_from_ncc.each_pair do |ncc_status, aws_status|
                 specify do
-                    $aws.map_to_provider_status(pcm_status).
+                    $aws.map_to_provider_status(ncc_status).
                         should == aws_status
                 end
             end
@@ -105,9 +105,9 @@ describe "PCM::Connection" do
         end
 
         context "in OpenStack" do
-            $os_from_pcm.each_pair do |pcm_status, os_status|
+            $os_from_ncc.each_pair do |ncc_status, os_status|
                 specify do
-                    $os.map_to_provider_status(pcm_status).
+                    $os.map_to_provider_status(ncc_status).
                         should == os_status
                 end
             end

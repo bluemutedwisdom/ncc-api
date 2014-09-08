@@ -1,23 +1,23 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
+require 'ncc_spec_helper'
 require 'rubygems'
-require 'pcm'
+require 'ncc'
 require 'fog'
 
 Fog.mock!
 
-describe PCM::Connection do
+describe NCC::Connection do
 
     before(:all)  { setup_fixture }
     after(:all)   { cleanup_fixture }
 
     before :each do
         $logger = LogCatcher.new
-        $pcm  = PCM::new('test/data/etc', :logger => $logger)
-        $aws  = $pcm.clouds('awscloud')
-        $os   = $pcm.clouds('openstack0')
+        $ncc  = NCC::new('test/data/etc', :logger => $logger)
+        $aws  = $ncc.clouds('awscloud')
+        $os   = $ncc.clouds('openstack0')
         $os.instance_eval { undef :size_id_field } if
             $os.respond_to? :size_id_field
         $os.instance_eval { undef :image_id_field } if
@@ -26,10 +26,10 @@ describe PCM::Connection do
             $os.respond_to? :translate_size
         $os.instance_eval { undef :translate_image } if
             $os.respond_to? :translate_image
-        $pcm.config[:providers]['openstack'].delete('sizes')
-        $pcm.config[:clouds]['openstack0'].delete('sizes')
-        $pcm.config[:providers]['openstack'].delete('images')
-        $pcm.config[:clouds]['openstack0'].delete('images')
+        $ncc.config[:providers]['openstack'].delete('sizes')
+        $ncc.config[:clouds]['openstack0'].delete('sizes')
+        $ncc.config[:providers]['openstack'].delete('images')
+        $ncc.config[:clouds]['openstack0'].delete('images')
     end
 
     describe "#id_of" do
@@ -69,22 +69,22 @@ describe PCM::Connection do
             end
 
             it "returns mapped flavor id when using mapping" do
-                $pcm.config[:clouds]['openstack0']['sizes'] ||= { }
-                $pcm.config[:clouds]['openstack0']['sizes']['testsize'] = "6"
+                $ncc.config[:clouds]['openstack0']['sizes'] ||= { }
+                $ncc.config[:clouds]['openstack0']['sizes']['testsize'] = "6"
                 $os.id_of(:size, $flavor).should == "testsize"
             end
 
             it "uses mapping from provider configuration" do
-                $pcm.config[:providers]['openstack']['sizes'] = {
+                $ncc.config[:providers]['openstack']['sizes'] = {
                     'testsize' => '6'
                 }
                 $os.id_of(:size, $flavor).should == 'testsize'
             end
 
             it "uses a map with cloud-precedence over provider" do
-                $pcm.config[:providers]['openstack']['sizes'] =
+                $ncc.config[:providers]['openstack']['sizes'] =
                     { 'testsize0' => '6' }
-                $pcm.config[:clouds]['openstack0']['sizes'] =
+                $ncc.config[:clouds]['openstack0']['sizes'] =
                     { 'testsize1' => '6' }
                 $os.id_of(:size, $flavor).should == 'testsize1'
             end
@@ -96,7 +96,7 @@ describe PCM::Connection do
                         :name
                     end
                 end
-                $pcm.config[:clouds]['openstack0']['sizes'] = {
+                $ncc.config[:clouds]['openstack0']['sizes'] = {
                     'testsize' => '8GB server'
                 }
                 $os.id_of(:size, $flavor).should == "testsize"
@@ -152,7 +152,7 @@ describe PCM::Connection do
             end
 
             it "returns a mapped flavor when using mapping" do
-                $pcm.config[:clouds]['openstack0']['sizes'] =
+                $ncc.config[:clouds]['openstack0']['sizes'] =
                     { 'testsize' => '6' }
                 flavor = $os.get_provider_object(:size => "testsize")
                 flavor.id.should == "6"
@@ -161,7 +161,7 @@ describe PCM::Connection do
 
             it "returns correct flavor when using mapping " +
                 "and translation" do
-                $pcm.config[:clouds]['openstack0']['sizes'] =
+                $ncc.config[:clouds]['openstack0']['sizes'] =
                     { 'testsize' => '6' }
                 $os.instance_eval do
                     def size_id_field
@@ -263,7 +263,7 @@ describe PCM::Connection do
             end
 
             it "returns a correct abstract object when using mapping" do
-                $pcm.config[:clouds]['openstack0']['sizes'] = {
+                $ncc.config[:clouds]['openstack0']['sizes'] = {
                     'testsize' => '6' }
                 obj = $os.object_of(:size, $flavor)
                 obj['id'].should == "testsize"
@@ -291,7 +291,7 @@ describe PCM::Connection do
         context "for size" do
 
             it "returns a correct abstract object when using mapping" do
-                $pcm.config[:clouds]['openstack0']['images'] = {
+                $ncc.config[:clouds]['openstack0']['images'] = {
                     'testimg' => $provider_image_id
                 }
                 obj = $os.object_of(:image, $provider_image)
@@ -329,7 +329,7 @@ describe PCM::Connection do
                 end
 
                 it "returns abstract id when using mapping" do
-                    $pcm.config[:clouds]['openstack0']['sizes'] = {
+                    $ncc.config[:clouds]['openstack0']['sizes'] = {
                         'm1.xlarge' => '6'
                     }
                     $os.map_from_raw_provider_id(:size, $flavor.id).
@@ -342,7 +342,7 @@ describe PCM::Connection do
                             :name
                         end
                     end
-                    $pcm.config[:clouds]['openstack0']['sizes'] = {
+                    $ncc.config[:clouds]['openstack0']['sizes'] = {
                         'm1.xlarge' => '8GB server'
                     }
                     $os.map_from_raw_provider_id(:size, $flavor.id).

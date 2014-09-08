@@ -1,32 +1,32 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
-require 'pcm'
+require 'ncc_spec_helper'
+require 'ncc'
 
 Fog.mock!
 CMDBclient.mock!
 
-describe PCM do
+describe NCC do
     before(:all) { setup_fixture }
     after(:all) { cleanup_fixture }
 
     before :all do
         $logger = LogCatcher.new
-        $pcm = PCM.new('test/data/etc')
+        $ncc = NCC.new('test/data/etc')
     end
 
     describe "#api_url" do
 
         context "with no configured v2api" do
-            specify { $pcm.api_url.should == 'http://localhost/pcm_api/v2' }
+            specify { $ncc.api_url.should == 'http://localhost/ncc_api/v2' }
         end
 
         context "with configured v2api" do
 
             it "returns configured v2api" do
-                $pcm.config['services']['v2api'] = 'http://api.host/pcm_api/v2'
-                $pcm.api_url.should == 'http://api.host/pcm_api/v2'
+                $ncc.config['services']['v2api'] = 'http://api.host/ncc_api/v2'
+                $ncc.api_url.should == 'http://api.host/ncc_api/v2'
             end
 
         end
@@ -35,14 +35,14 @@ describe PCM do
 
 end
 
-describe PCM::Instance do
+describe NCC::Instance do
     before(:all) { setup_fixture }
     after(:all) { cleanup_fixture }
 
     describe ".new" do
 
         it "sets console_log" do
-            instance = PCM::Instance.new($pcm, 'console_log' => 'testvalue')
+            instance = NCC::Instance.new($ncc, 'console_log' => 'testvalue')
             instance.console_log.should == 'testvalue'
         end
 
@@ -51,7 +51,7 @@ describe PCM::Instance do
     describe "#set_without_validation" do
 
         it "sets console_log" do
-            instance = PCM::Instance.new($pcm)
+            instance = NCC::Instance.new($ncc)
             instance.set_without_validation(:console_log => 'testvalue')
             instance.console_log.should == 'testvalue'
         end
@@ -61,7 +61,7 @@ describe PCM::Instance do
     describe "#console_log=" do
 
         it "sets console_log" do
-            instance = PCM::Instance.new($pcm)
+            instance = NCC::Instance.new($ncc)
             instance.console_log = 'testvalue'
             instance.console_log.should == 'testvalue'
         end
@@ -71,31 +71,31 @@ describe PCM::Instance do
 
 end
 
-describe PCM::Connection do
+describe NCC::Connection do
     before(:all) { setup_fixture }
     after(:all) { cleanup_fixture }
 
     before :all do
         $req = { 'size' => 'm1.medium', 'image' => 'centos5.6' }
-        $pcm.clouds('awscloud').
+        $ncc.clouds('awscloud').
             fog.register_image('testimg', 'testimg', '/dev/sda0')
-        $pcm.config[:clouds]['awscloud']['images'] =
-            { 'centos5.6' => $pcm.clouds('awscloud').fog.images.first.id }
+        $ncc.config[:clouds]['awscloud']['images'] =
+            { 'centos5.6' => $ncc.clouds('awscloud').fog.images.first.id }
     end
 
     context "in AWS" do
 
         before :each do
-            $pcm.clouds('awscloud').fog.servers.each { |s| s.destroy }
-            $instance = $pcm.clouds('awscloud').create_instance($req)
-            $pcm.clouds('awscloud').fog.servers.get($instance.id).
+            $ncc.clouds('awscloud').fog.servers.each { |s| s.destroy }
+            $instance = $ncc.clouds('awscloud').create_instance($req)
+            $ncc.clouds('awscloud').fog.servers.get($instance.id).
                 wait_for { ready? }
         end
 
         describe "#console_log" do
 
             it "returns the instance console log" do
-                logtext = $pcm.clouds('awscloud').console_log($instance.id)
+                logtext = $ncc.clouds('awscloud').console_log($instance.id)
                 logtext.should_not be_nil
             end
 
