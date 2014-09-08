@@ -1,15 +1,12 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-$LOAD_PATH.unshift '/opt/pptools'
-require 'ppenv'
-
 require 'pcm_spec_helper'
-require 'ppinventory'
+require 'cmdbclient'
 require 'pcm'
 
 Fog.mock!
-PPInventory.mock!
+CMDBclient.mock!
 
 def next_name(inv)
     highest = inv.query('system').map { |s| s['fqdn'] }.sort.last
@@ -32,8 +29,8 @@ describe PCM do
 
     describe "#inventory" do
 
-        it "returns a PPInventory object" do
-            $pcm.inventory.should be_a PPInventory
+        it "returns a CMDBclient object" do
+            $pcm.inventory.should be_a CMDBclient
         end
 
     end

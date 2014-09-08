@@ -1,9 +1,6 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-$LOAD_PATH.unshift '/opt/pptools'
-require 'ppenv'
-
 require 'pcm_spec_helper'
 
 $pcmapi_url = ENV['PCMAPI_URL'] || 'http://pcm-api:8899/pcm_api/v2'

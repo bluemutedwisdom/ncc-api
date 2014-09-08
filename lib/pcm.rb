@@ -15,14 +15,11 @@
 # */
 
 
-$LOAD_PATH.unshift '/opt/pptools'
-require 'ppenv'
-
 require 'pcm/config'
 require 'pcm/connection'
 require 'pcm/instance'
 require 'pcm/error'
-require 'ppinventory'
+require 'cmdbclient'
 
 class PCM
     attr_reader :config, :inventory
@@ -35,7 +32,7 @@ class PCM
         config_path.unshift(File.join(ENV['PCMAPI_HOME'], 'etc')) if
             ENV['PCMAPI_HOME']
         @config = PCM::Config.new(config_path, :logger => @logger)
-        @inventory = PPInventory.new(@config)
+        @inventory = CMDBclient.new(@config)
         @clouds = { }
     end
 

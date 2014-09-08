@@ -1,14 +1,12 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-$LOAD_PATH.unshift '/opt/pptools'
-require 'ppenv'
-
 require 'pcm_spec_helper'
 require 'pcm'
+require 'cmdbclient'
 
 Fog.mock!
-PPInventory.mock!
+CMDBclient.mock!
 
 describe PCM::Connection do
 

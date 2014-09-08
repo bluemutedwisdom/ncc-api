@@ -1,15 +1,12 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-$LOAD_PATH.unshift '/opt/pptools'
-require 'ppenv'
-
 require 'fileutils'
 require 'pcm_spec_helper'
 require 'pcm'
 
 Fog.mock!
-PPInventory.mock!
+CMDBclient.mock!
 
 describe PCM::Connection do
     before(:all) { setup_fixture }
