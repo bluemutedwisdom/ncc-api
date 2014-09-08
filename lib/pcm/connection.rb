@@ -179,7 +179,7 @@ class PCM::Connection
                  else
                      [k, v]
                  end
-             end
+             end.reject { |p| p.nil? }
                            ]
     end
 
