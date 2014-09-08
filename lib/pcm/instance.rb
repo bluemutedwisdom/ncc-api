@@ -40,11 +40,11 @@ class Hash
 
 end
 
-class PCM
+class NCC
 
 end
 
-class PCM::Instance
+class NCC::Instance
 
     @@valid_statuses = %w(active build terminated error hard-reboot
                           reboot provider-operation shutting-down
@@ -138,19 +138,19 @@ class PCM::Instance
             when :console_log
                 @console_log = value
             else
-                raise PCM::Error, "Invalid field #{field.inspect}"
+                raise NCC::Error, "Invalid field #{field.inspect}"
             end
         end
     end
 
     def image=(newimage)
-        raise PCM::Error, "Invalid image #{newimage.inspect}" unless
+        raise NCC::Error, "Invalid image #{newimage.inspect}" unless
             newimage.nil? or @cfg[:images].has_key? newimage
         @image = newimage
     end
 
     def size=(newsize)
-        raise PCM::Error, "Invalid size ${newsize.inspect}" unless
+        raise NCC::Error, "Invalid size ${newsize.inspect}" unless
             newsize.nil? or @cfg[:sizes].has_key? newsize
         @size = newsize
     end
@@ -173,7 +173,7 @@ class PCM::Instance
 
     def extra=(newextra)
         if !newextra.nil?
-            raise PCM::Error, "Invalid extra parameter of type " +
+            raise NCC::Error, "Invalid extra parameter of type " +
                 "#{newextra.class} (must be Hash)" unless
                 newextra.respond_to? :to_hash
             if @extra.nil?
@@ -185,7 +185,7 @@ class PCM::Instance
     end
 
     def status=(newstatus)
-        raise PCM::Error, "Invalid status #{newstatus.inspect}" unless
+        raise NCC::Error, "Invalid status #{newstatus.inspect}" unless
             @@valid_statuses.include? newstatus
         @status = newstatus
     end

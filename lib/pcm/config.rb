@@ -18,11 +18,11 @@
 require 'rubygems'
 require 'json'
 
-class PCM
+class NCC
 
 end
 
-class PCM::Config
+class NCC::Config
     include Enumerable
 
     Infinite = +1.0/0.0     # Not really *math*, per se, but Lewis
@@ -31,8 +31,8 @@ class PCM::Config
 
     attr_reader :mtime, :file
 
-    def initialize(source = ["/etc/pcm-api",
-                       "#{ENV['PCMAPI_HOME']}/etc"], opt={})
+    def initialize(source = ["/etc/ncc-api",
+                       "#{ENV['NCCAPI_HOME']}/etc"], opt={})
         @opt = opt
         @file = { }
         @mtime = nil
@@ -74,7 +74,7 @@ class PCM::Config
                             data[key] = @data[key]
                         else
                             data[key] =
-                                PCM::Config.new(File.join(@file, entry),
+                                NCC::Config.new(File.join(@file, entry),
                                             @opt)
                         end
                     end

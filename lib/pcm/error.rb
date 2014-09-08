@@ -15,26 +15,26 @@
 # */
 
 
-class PCM
+class NCC
 
 end
 
-class PCM::Error < StandardError
+class NCC::Error < StandardError
 
 end
 
-class PCM::Error::NotFound < PCM::Error
+class NCC::Error::NotFound < NCC::Error
 
 end
 
-class PCM::Error::Cloud < PCM::Error
+class NCC::Error::Cloud < NCC::Error
 
 end
 
-class PCM::Error::Internal < PCM::Error
+class NCC::Error::Internal < NCC::Error
 
 end
 
-class PCM::Error::Client < PCM::Error
+class NCC::Error::Client < NCC::Error
 
 end

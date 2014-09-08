@@ -14,7 +14,7 @@
 # limitations under the License.
 # */
 
-class PCM::Connection::AWS < PCM::Connection
+class NCC::Connection::AWS < NCC::Connection
 
     def translate_size(flavor)
         generic_translate(:size, flavor).

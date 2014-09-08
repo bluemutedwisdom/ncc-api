@@ -15,7 +15,7 @@
 # */
 
 require 'rubygems'
-require 'pcm'
+require 'ncc'
 require 'json'
 require 'sinatra'
 require 'fog'
@@ -26,7 +26,7 @@ configure :development do
     set :logging, Logger::DEBUG
 end
 
-$pcm = PCM.new
+$ncc = NCC.new
 
 def error_message(status, err)
     status_message = case status
@@ -60,129 +60,129 @@ def respond(status, header={}, &block)
                    params.has_key?('pretty') ? (JSON.pretty_generate(obj) + "\n") : obj.to_json
                end
         return [status, header, body]
-    rescue PCM::Error::NotFound => error
+    rescue NCC::Error::NotFound => error
         halt error_message(404, error)
-    rescue PCM::Error::Cloud => error
+    rescue NCC::Error::Cloud => error
         halt error_message(503, error)
-    rescue PCM::Error::Client => error
+    rescue NCC::Error::Client => error
         halt error_message(400, error)
     rescue Exception => error
         halt error_message(500, error)
     end
 end
 
-get '/pcm_api' do
+get '/ncc_api' do
     respond 200 do
-        $pcm.config['services'].to_hash.merge({ 'v2api' => $pcm.api_url })
+        $ncc.config['services'].to_hash.merge({ 'v2api' => $ncc.api_url })
     end
 end
 
-get '/pcm_api/v2' do
+get '/ncc_api/v2' do
     respond 200 do
         {
-            "clouds" => "/pcm_api/v2/clouds",
-            "images" => "/pcm_api/v2/images",
-            "sizes" => "/pcm_api/v2/sizes",
+            "clouds" => "/ncc_api/v2/clouds",
+            "images" => "/ncc_api/v2/images",
+            "sizes" => "/ncc_api/v2/sizes",
         }
     end
 end
 
-get '/pcm_api/v2/clouds' do
-    respond(200) { $pcm.clouds }
+get '/ncc_api/v2/clouds' do
+    respond(200) { $ncc.clouds }
 end
 
-get '/pcm_api/v2/sizes' do
-    respond(200) { $pcm.sizes }
+get '/ncc_api/v2/sizes' do
+    respond(200) { $ncc.sizes }
 end
 
-get '/pcm_api/v2/images' do
-    respond(200) { $pcm.images }
+get '/ncc_api/v2/images' do
+    respond(200) { $ncc.images }
 end
 
-get '/pcm_api/v2/sizes/:size_id' do |size_id|
-    respond(200) { $pcm.sizes(size_id) }
+get '/ncc_api/v2/sizes/:size_id' do |size_id|
+    respond(200) { $ncc.sizes(size_id) }
 end
 
-get '/pcm_api/v2/images/:image_id' do |image_id|
-    respond(200) { $pcm.images(image_id) }
+get '/ncc_api/v2/images/:image_id' do |image_id|
+    respond(200) { $ncc.images(image_id) }
 end
 
-get '/pcm_api/v2/clouds/:cloud' do |cloud|
+get '/ncc_api/v2/clouds/:cloud' do |cloud|
     respond 200 do
         {
             'name' => cloud,
             'status' => 'ok',
-            'provider' => $pcm.clouds(cloud).provider,
-            'service' => $pcm.clouds(cloud).fog.class.to_s
+            'provider' => $ncc.clouds(cloud).provider,
+            'service' => $ncc.clouds(cloud).fog.class.to_s
         }
     end
 end
 
-get '/pcm_api/v2/clouds/:cloud/sizes' do |cloud|
-    respond(200) { $pcm.clouds(cloud).sizes }
+get '/ncc_api/v2/clouds/:cloud/sizes' do |cloud|
+    respond(200) { $ncc.clouds(cloud).sizes }
 end
 
-get '/pcm_api/v2/clouds/:cloud/sizes/:size_id' do |cloud, size_id|
-    respond(200) { $pcm.clouds(cloud).sizes(size_id) }
+get '/ncc_api/v2/clouds/:cloud/sizes/:size_id' do |cloud, size_id|
+    respond(200) { $ncc.clouds(cloud).sizes(size_id) }
 end
 
-get '/pcm_api/v2/clouds/:cloud/images' do |cloud|
-    respond(200) { $pcm.clouds(cloud).images }
+get '/ncc_api/v2/clouds/:cloud/images' do |cloud|
+    respond(200) { $ncc.clouds(cloud).images }
 end
 
-get '/pcm_api/v2/clouds/:cloud/images/:image_id' do |cloud, image_id|
-    respond(200) { $pcm.clouds(cloud).images(image_id) }
+get '/ncc_api/v2/clouds/:cloud/images/:image_id' do |cloud, image_id|
+    respond(200) { $ncc.clouds(cloud).images(image_id) }
 end
 
-get '/pcm_api/v2/clouds/:cloud/instances' do |cloud|
-    respond(200) { $pcm.clouds(cloud).instances.map { |i| i.to_hash } }
+get '/ncc_api/v2/clouds/:cloud/instances' do |cloud|
+    respond(200) { $ncc.clouds(cloud).instances.map { |i| i.to_hash } }
 end
 
 
-get '/pcm_api/v2/clouds/:cloud/instances/:instance_id/console_log' do |cloud,
+get '/ncc_api/v2/clouds/:cloud/instances/:instance_id/console_log' do |cloud,
     instance_id|
     respond(200, 'content-type' => 'text/plain') do
         # TODO influence last-modified with console log timestamp
-        $pcm.clouds(cloud).console_log(instance_id)['output']
+        $ncc.clouds(cloud).console_log(instance_id)['output']
     end
 end
 
-post '/pcm_api/v2/clouds/:cloud/instances' do |cloud|
+post '/ncc_api/v2/clouds/:cloud/instances' do |cloud|
     respond 201 do
         begin
             request.body.rewind
             instance_spec = JSON.parse(request.body.read)
             instance_req = instance_spec
-            $pcm.clouds(cloud).create_instance(instance_req)
+            $ncc.clouds(cloud).create_instance(instance_req)
         rescue JSON::ParserError => e
-            raise PCM::Error::Client, "Error parsing request: #{e.message}"
+            raise NCC::Error::Client, "Error parsing request: #{e.message}"
         end
     end
 end
 
-get '/pcm_api/v2/clouds/:cloud/instances/:instance_id' do |cloud, instance_id|
+get '/ncc_api/v2/clouds/:cloud/instances/:instance_id' do |cloud, instance_id|
     respond(200) do
-        $pcm.clouds(cloud).instances(instance_id).to_hash
+        $ncc.clouds(cloud).instances(instance_id).to_hash
     end
 end
 
 
-delete '/pcm_api/v2/clouds/:cloud/instances/:instance_id' do |cloud,
+delete '/ncc_api/v2/clouds/:cloud/instances/:instance_id' do |cloud,
     instance_id|
     respond 204 do
-        $pcm.clouds(cloud).delete(instance_id)
+        $ncc.clouds(cloud).delete(instance_id)
         nil
     end
 end
 
-put '/pcm_api/v2/clouds/:cloud/instances/:instance_id' do |cloud, instance_id|
+put '/ncc_api/v2/clouds/:cloud/instances/:instance_id' do |cloud, instance_id|
     respond 202 do
-        instance = $pcm.clouds(cloud).instances(instance_id)
+        instance = $ncc.clouds(cloud).instances(instance_id)
         begin
             request.body.rewind
             update_spec = JSON.parse(request.body.read)
         rescue JSON::ParserError => e
-            raise PCM::Error::Client, "Error parsing request #{e.message}"
+            raise NCC::Error::Client, "Error parsing request #{e.message}"
         end
         actions = []
         update_spec.each_pair do |key, value|
@@ -190,13 +190,13 @@ put '/pcm_api/v2/clouds/:cloud/instances/:instance_id' do |cloud, instance_id|
             when 'status'
                 if value == 'reboot'
                     actions << lambda { instance.status = 'reboot' }
-                    $pcm.clouds(cloud).reboot(instance.id)
+                    $ncc.clouds(cloud).reboot(instance.id)
                 else
-                    raise PCM::Error::Client,
+                    raise NCC::Error::Client,
                     "Cannot update to status #{value.inspect}"
                 end
             else
-                raise PCM::Error::Client,
+                raise NCC::Error::Client,
                 "Cannot update field #{key.inspect}"
             end
         end

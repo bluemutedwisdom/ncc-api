@@ -14,7 +14,7 @@
 # limitations under the License.
 # */
 
-class PCM::Connection::OpenStack < PCM::Connection
+class NCC::Connection::OpenStack < NCC::Connection
 
     def size_id_field
         :name

@@ -15,23 +15,23 @@
 # */
 
 
-require 'pcm/config'
-require 'pcm/connection'
-require 'pcm/instance'
-require 'pcm/error'
+require 'ncc/config'
+require 'ncc/connection'
+require 'ncc/instance'
+require 'ncc/error'
 require 'cmdbclient'
 
-class PCM
+class NCC
     attr_reader :config, :inventory
 
     def initialize(config_path=nil, opt={})
         @logger = opt[:logger] if opt.has_key? :logger
         config_path ||= [
-            '/etc/pcm-api']
+            '/etc/ncc-api']
         config_path = [config_path] unless config_path.respond_to? :unshift
-        config_path.unshift(File.join(ENV['PCMAPI_HOME'], 'etc')) if
-            ENV['PCMAPI_HOME']
-        @config = PCM::Config.new(config_path, :logger => @logger)
+        config_path.unshift(File.join(ENV['NCCAPI_HOME'], 'etc')) if
+            ENV['NCCAPI_HOME']
+        @config = NCC::Config.new(config_path, :logger => @logger)
         @inventory = CMDBclient.new(@config)
         @clouds = { }
     end
@@ -48,11 +48,11 @@ class PCM
 
     def connect(cloud, opt={})
         if ! @config[:clouds].has_key? cloud
-            raise PCM::Error::NotFound, "Cloud #{cloud} not provided"
+            raise NCC::Error::NotFound, "Cloud #{cloud} not provided"
         end
-        @clouds[cloud] ||= PCM::Connection.connect(self, cloud, opt)
+        @clouds[cloud] ||= NCC::Connection.connect(self, cloud, opt)
         if @clouds[cloud].nil? or ! @clouds[cloud].current?
-            @clouds[cloud] = PCM::Connection.connect(self, cloud, opt)
+            @clouds[cloud] = NCC::Connection.connect(self, cloud, opt)
         end
         @clouds[cloud]
     end
@@ -72,7 +72,7 @@ class PCM
             if @config[:sizes].has_key? size
                 @config[:sizes][size].to_hash
             else
-                raise PCM::Error::NotFound, "No such size #{size.inspect}"
+                raise NCC::Error::NotFound, "No such size #{size.inspect}"
             end
         end
     end
@@ -84,7 +84,7 @@ class PCM
             if @config[:images].has_key? image
                 @config[:images][image].to_hash
             else
-                raise PCM::Error::NotFound, "No such image #{image.inspect}"
+                raise NCC::Error::NotFound, "No such image #{image.inspect}"
             end
         end
     end
@@ -93,7 +93,7 @@ class PCM
         if @config['services'].has_key? 'v2api'
             @config['services']['v2api']
         else
-            'http://localhost/pcm_api/v2'
+            'http://localhost/ncc_api/v2'
         end
     end
 

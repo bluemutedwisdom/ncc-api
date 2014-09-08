@@ -18,31 +18,31 @@ require 'rubygems'
 require 'fog'
 require 'uuidtools'
 
-class PCM
+class NCC
 
 end
 
-class PCM::Connection
+class NCC::Connection
 
     attr_reader :fog
 
-    def self.connect(pcm, cloud=:default, opt={})
-        cfg = pcm.config
+    def self.connect(ncc, cloud=:default, opt={})
+        cfg = ncc.config
         provider = cfg[:clouds][cloud]['provider']
         case provider
         when 'aws'
-            require 'pcm/connection/aws'
-            PCM::Connection::AWS.new(pcm, cloud, opt)
+            require 'ncc/connection/aws'
+            NCC::Connection::AWS.new(ncc, cloud, opt)
         when 'openstack'
-            require 'pcm/connection/openstack'
-            PCM::Connection::OpenStack.new(pcm, cloud, opt)
+            require 'ncc/connection/openstack'
+            NCC::Connection::OpenStack.new(ncc, cloud, opt)
         end
     end
 
-    def initialize(pcm, cloud, opt={})
-        @pcm = pcm
+    def initialize(ncc, cloud, opt={})
+        @ncc = ncc
         @cache = { }
-        @cfg = pcm.config
+        @cfg = ncc.config
         @cfg_mtime = @cfg.mtime
         @cloud = cloud
         @logger = opt[:logger] if opt.has_key? :logger
@@ -122,17 +122,17 @@ class PCM::Connection
                 retry
             else
                 @fog = nil
-                raise PCM::Error::Cloud, "Error communicating with #{provider} " +
+                raise NCC::Error::Cloud, "Error communicating with #{provider} " +
                     "cloud #{@cloud} (#{e.class}): #{e.message}"
             end
-        rescue PCM::Error::Cloud => err
+        rescue NCC::Error::Cloud => err
             @fog = nil
             raise err
-        rescue PCM::Error => err
+        rescue NCC::Error => err
             raise err
         rescue StandardError => err
             @fog = nil
-            raise PCM::Error::Cloud, "Error communicating with #{provider} " +
+            raise NCC::Error::Cloud, "Error communicating with #{provider} " +
                 "cloud #{@cloud} [#{err.class}]: #{err.message}"
         end
     end
@@ -380,7 +380,7 @@ class PCM::Connection
     end
 
     def instance_for(server)
-        instance = PCM::Instance.new(@cfg, :logger => @logger)
+        instance = NCC::Instance.new(@cfg, :logger => @logger)
         instance.set_without_validation(:id => server.id)
         instance.set_without_validation(:name => instance_name(server))
         instance.set_without_validation(:size => instance_size(server))
@@ -485,19 +485,19 @@ class PCM::Connection
     end
 
     def create_instance(instance_spec, wait_for_ip=60)
-        if ! instance_spec.kind_of? PCM::Instance
-            instance_spec = PCM::Instance.new(@cfg, instance_spec)
+        if ! instance_spec.kind_of? NCC::Instance
+            instance_spec = NCC::Instance.new(@cfg, instance_spec)
         end
-        req_id = ['pcm',
+        req_id = ['ncc',
             @cloud,
             UUIDTools::UUID.random_create.to_s].join('-')
         begin
             info "#{@cloud} requesting name from inventory using #{req_id}"
-            fqdn = @pcm.inventory.get_or_assign_system_name(req_id)['fqdn']
+            fqdn = @ncc.inventory.get_or_assign_system_name(req_id)['fqdn']
         rescue StandardError => e
-            raise PCM::Error::Cloud, "Error [#{e.class}] " +
+            raise NCC::Error::Cloud, "Error [#{e.class}] " +
                 "communicating with inventory to " +
-                "assign name using (pcm_req_id=#{req_id}): #{e.message}"
+                "assign name using (ncc_req_id=#{req_id}): #{e.message}"
         end
         instance_spec.name = fqdn
         begin
@@ -517,9 +517,9 @@ class PCM::Connection
             if ! server.nil? and server.id
                 inv_update['serial_number'] = server.id
             end
-            @pcm.inventory.update('system', inv_update, fqdn)
+            @ncc.inventory.update('system', inv_update, fqdn)
             server_id = (server.nil? ? 'nil' : server.id)
-            communication_error "[#{err.class}] (pcm_req_id=#{req_id} " +
+            communication_error "[#{err.class}] (ncc_req_id=#{req_id} " +
                 "instance_id=#{server_id}): #{err.message}"
         end
         elapsed = Time.now - t0
@@ -533,25 +533,25 @@ class PCM::Connection
         inv_req['status'] = 'building'
         begin
             info "#{@cloud} updating inventory #{fqdn}/#{req_id} -> #{inv_req.inspect}"
-            @pcm.inventory.update('system', inv_req, fqdn)
+            @ncc.inventory.update('system', inv_req, fqdn)
         rescue StandardError => e
-            raise PCM::Error::Cloud, "Error [#{e.class}] updating inventory " +
+            raise NCC::Error::Cloud, "Error [#{e.class}] updating inventory " +
                 "system #{fqdn} " +
-                "(cloud=#{@cloud} pcm_req_id=#{req_id} " +
+                "(cloud=#{@cloud} ncc_req_id=#{req_id} " +
                 "instance_id=#{server.id}): " + e.message
         end
         instance
     end
 
     def instance_not_found(instance_id)
-        raise PCM::Error::NotFound, "Instance #{instance_id.inspect} not " +
+        raise NCC::Error::NotFound, "Instance #{instance_id.inspect} not " +
             "found in #{provider} cloud #{@cloud}"
     end
 
     def communication_error(message)
         message = "Error communicating with #{provider} cloud #{@cloud}: " + message unless
             /Error .*communicating with/.match(message)
-        raise PCM::Error::Cloud, message
+        raise NCC::Error::Cloud, message
     end
 
     def delete(instance_id)
@@ -564,7 +564,7 @@ class PCM::Connection
                 server.destroy
                 inv_update = { 'fqdn' => instance.name,
                     'status' => 'decommissioned' }
-                @pcm.inventory.update('system', inv_update, instance.name)
+                @ncc.inventory.update('system', inv_update, instance.name)
             rescue StandardError => e
                 communication_error "deleting fqdn=#{instance.name} " +
                     "instance_id=#{server.id}: #{e.message}"
@@ -573,7 +573,7 @@ class PCM::Connection
     end
 
     def console_log(instance_id)
-        raise PCM::Error::NotFound, "Cloud #{@cloud} provider " +
+        raise NCC::Error::NotFound, "Cloud #{@cloud} provider " +
             "#{provider} does not support console logs"
     end
 

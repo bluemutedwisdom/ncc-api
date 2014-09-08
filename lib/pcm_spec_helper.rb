@@ -135,7 +135,7 @@ def do_request(opt)
     end
     method ||= :GET
     rel_uri = opt[method]
-    url = URI.parse($pcmapi_url)
+    url = URI.parse($nccapi_url)
     url.path = rtrim(url.path) + '/' + ltrim(rel_uri)
     url.query = opt[:query] if opt.has_key? :query
     http = Net::HTTP.new(url.host, url.port)
