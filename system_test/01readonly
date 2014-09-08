@@ -1,15 +1,15 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-require 'pcm_spec_helper'
+require 'ncc_spec_helper'
 
-$pcmapi_url = ENV['PCMAPI_URL'] || 'http://pcm-api:8899/pcm_api/v2'
+$nccapi_url = ENV['NCCAPI_URL'] || 'http://ncc-api:8899/ncc_api/v2'
 
 $test_spec = File.open('system_test/test_spec.json') do |fh|
             JSON.parse fh.read
         end
 
-describe "pcm-api-v2" do
+describe "ncc-api" do
 
     it "returns a list of clouds" do
         reply = get '/clouds'

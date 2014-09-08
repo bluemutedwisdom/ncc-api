@@ -22,7 +22,7 @@
 		}
   },
   "inventory": {
-  		"url": "http://cmdb/inv_api/v1",
+  		"url": "http://cmdb/cmdb_api/v1",
 		"username": "testuser",
 		"password": "nonsense"
   }

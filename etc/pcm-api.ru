@@ -1,3 +1,3 @@
-require 'pcm-api'
+require 'ncc-api'
 
 run Sinatra::Application
