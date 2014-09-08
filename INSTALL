@@ -1,6 +1,4 @@
 Installation Instructions (basic)
 
-* Install dependencies (see 'deps' for gem hints)
-* Copy lib/*.rb to a Ruby library location
-* Copy ncc-api to bin location
+* gem install ncc-api
 * Copy and configure config.ru and unicorn config appopriately

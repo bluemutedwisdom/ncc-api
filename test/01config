@@ -1,6 +1,7 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
+$LOAD_PATH.unshift 'test/lib'
 require 'ncc_spec_helper'
 require 'ncc/config'
 require 'fileutils'

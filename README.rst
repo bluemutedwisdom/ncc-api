@@ -1,7 +1,7 @@
 ncc-api
 =======
 
-The noms cloud controller API provides a ReSTful API abstracting and aggregating a set of
+The NOMS cloud controller API provides a ReSTful API abstracting and aggregating a set of
 specific cloud computing providers (called "clouds").
 
 Definitions
