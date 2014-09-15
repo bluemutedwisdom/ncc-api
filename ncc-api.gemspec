@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
     s.name        = 'ncc-api'
-    s.version     = '1.0.0'
+    s.version     = '1.0.1'
     s.summary     = 'NOMS Cloud Controller API'
     s.description = 'The NOMS cloud controller API provides a ReSTful API abstracting and aggregating a set of specific cloud computing providers (called "clouds").'
     s.authors     = ["Jeremy Brinkley"]

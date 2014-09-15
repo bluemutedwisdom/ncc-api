@@ -55,7 +55,7 @@ class NCC::Connection::OpenStack < NCC::Connection
     end
 
     def connection_params
-        ['openstack_auth_url', 'openstack_username', 'openstack_api_key']
+        ['openstack_auth_url', 'openstack_username', 'openstack_api_key', 'openstack_tenant']
     end
 
     def map_to_status(provider_status)
