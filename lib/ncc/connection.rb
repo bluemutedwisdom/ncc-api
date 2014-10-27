@@ -486,7 +486,7 @@ class NCC::Connection
         instance
     end
 
-    def create_instance(instance_spec, wait_for_ip=60)
+    def create_instance(instance_spec, wait_for_ip=160)
         if ! instance_spec.kind_of? NCC::Instance
             instance_spec = NCC::Instance.new(@cfg, instance_spec)
         end
