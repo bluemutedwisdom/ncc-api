@@ -418,7 +418,7 @@ class NCC::Connection
     end
 
     def instance_ip_address(server)
-        server.ip_address
+        server.private_ip_address.to_s
     end
 
     def instances(instance_id=nil)
@@ -470,6 +470,7 @@ class NCC::Connection
             'size' => i.size,
             'image' => i.image,
             'serial_number' => i.id,
+            'uuid' => i.id,
             'roles' => i.role.sort.join(','),
             'ipaddress' => i.ip_address,
             'host_fqdn' => host_fqdn(i.host),
@@ -517,13 +518,16 @@ class NCC::Connection
             if wait_for_ip > 0 and instance_ip_address(server).nil?
                 info "#{@cloud} waiting for ip on #{server.id}"
                 this = self
-                server.wait_for(wait_for_ip) { this.instance_ip_address(server) }
+                server.wait_for(wait_for_ip) { ready? }
+		STDERR.puts "got server #{server.inspect}"
+		STDERR.puts "got server ip #{server.private_ip_address.to_s}"
             end
         rescue StandardError => err
             inv_update = { 'fqdn' => fqdn, 'status' => 'decommissioned' }
             if ! server.nil? and server.id
                 inv_update['uuid'] = server.id
                 inv_update['serial_number'] = server.id
+                inv_update['uuid'] = server.id
             end
             @ncc.inventory.update('system', inv_update, fqdn)
             server_id = (server.nil? ? 'nil' : server.id)
@@ -534,7 +538,8 @@ class NCC::Connection
         info "Created instance instance_id=#{server.id} at #{provider} cloud #{@cloud} in #{elapsed}s"
         instance = instance_for server
         instance_spec.id = instance.id
-        instance_spec.ip_address = instance.ip_address
+        instance_spec.ip_address = server.private_ip_address.to_s  # instance.ip_address
+		STDERR.puts "setting server ip #{instance_spec.ip_address} from #{instance.ip_address} or #{server.private_ip_address}"
         instance_spec.host = instance.host
         inv_req = inventory_request(instance_spec)
         inv_req['cloud'] = @cloud
