@@ -2,12 +2,13 @@
 # -*- mode: ruby -*-
 
 $LOAD_PATH.unshift 'test/lib'
+require 'rubygems'
 require 'ncc_spec_helper'
-require 'cmdbclient'
+require 'noms/cmdb'
 require 'ncc'
 
 Fog.mock!
-CMDBclient.mock!
+NOMS::CMDB.mock!
 
 def next_name(inv)
     highest = inv.query('system').map { |s| s['fqdn'] }.sort.last
@@ -30,8 +31,8 @@ describe NCC do
 
     describe "#inventory" do
 
-        it "returns a CMDBclient object" do
-            $ncc.inventory.should be_a CMDBclient
+        it "returns a NOMS::CMDB object" do
+            $ncc.inventory.should be_a NOMS::CMDB
         end
 
     end

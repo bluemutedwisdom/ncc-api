@@ -84,6 +84,7 @@ get '/ncc_api/v2' do
             "clouds" => "/ncc_api/v2/clouds",
             "images" => "/ncc_api/v2/images",
             "sizes" => "/ncc_api/v2/sizes",
+            "version" => NCC::VERSION,
         }
     end
 end

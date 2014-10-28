@@ -2,11 +2,12 @@
 # -*- mode: ruby -*-
 
 $LOAD_PATH.unshift 'test/lib'
+require 'rubygems'
 require 'ncc_spec_helper'
 require 'ncc'
-require 'cmdbclient'
+require 'noms/cmdb'
 
-CMDBclient.mock!
+NOMS::CMDB.mock!
 Fog.mock!
 
 describe NCC::Instance do

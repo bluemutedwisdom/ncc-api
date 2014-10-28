@@ -16,11 +16,12 @@
 # */
 
 
+require 'rubygems'
+require 'noms/cmdb'
 require 'ncc/config'
 require 'ncc/connection'
 require 'ncc/instance'
 require 'ncc/error'
-require 'cmdbclient'
 
 class NCC
     attr_reader :config, :inventory
@@ -33,7 +34,7 @@ class NCC
         config_path.unshift(File.join(ENV['NCCAPI_HOME'], 'etc')) if
             ENV['NCCAPI_HOME']
         @config = NCC::Config.new(config_path, :logger => @logger)
-        @inventory = CMDBclient.new(@config)
+        @inventory = NOMS::CMDB.new(@config)
         @clouds = { }
     end
 

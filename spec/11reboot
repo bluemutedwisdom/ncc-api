@@ -2,11 +2,13 @@
 # -*- mode: ruby -*-
 
 $LOAD_PATH.unshift 'test/lib'
+require 'rubygems'
 require 'ncc_spec_helper'
+require 'noms/cmdb'
 require 'ncc'
 
 Fog.mock!
-CMDBclient.mock!
+NOMS::CMDB.mock!
 
 describe NCC::Connection do
     before(:all) { setup_fixture }

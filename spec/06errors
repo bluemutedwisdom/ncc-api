@@ -4,10 +4,10 @@
 $LOAD_PATH.unshift 'test/lib'
 require 'ncc_spec_helper'
 require 'ncc'
-require 'cmdbclient'
+require 'noms/cmdb'
 
 Fog.mock!
-CMDBclient.mock!
+NOMS::CMDB.mock!
 
 describe "NCC::Error" do
 

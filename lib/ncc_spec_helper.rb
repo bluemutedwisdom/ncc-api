@@ -23,6 +23,12 @@ require 'pp'
 require 'net/http'
 require 'json'
 
+RSpec.configure do |config|
+  config.expect_with :rspec do |c|
+    c.syntax = [:should, :expect]
+  end
+end
+
 def set_testvalue(s, k='test', subkey='testkey')
     File.open("test/data/etc/#{k}.conf", 'w') do |fh|
         fh << "{ \"#{subkey}\": \"#{s}\" }\n"

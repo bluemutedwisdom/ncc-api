@@ -15,6 +15,9 @@
 # limitations under the License.
 # */
 
+# TODO:
+# Align desired logger interface with Ruby Logger class standard
+
 require 'rubygems'
 require 'fog'
 require 'uuidtools'
@@ -49,6 +52,7 @@ class NCC::Connection
         @logger = opt[:logger] if opt.has_key? :logger
         @cache_timeout = opt[:cache_timeout] || 600
         @auth_retry_limit = opt[:auth_retry_limit] || 1
+        @create_timeout = opt[:create_timeout] || 160
         do_connect
     end
 
@@ -467,7 +471,7 @@ class NCC::Connection
             'image' => i.image,
             'serial_number' => i.id,
             'roles' => i.role.sort.join(','),
-            'ip_address' => i.ip_address,
+            'ipaddress' => i.ip_address,
             'host_fqdn' => host_fqdn(i.host),
             'environment_name' => i.environment
         }.merge(instance.extra 'inventory')
@@ -485,7 +489,9 @@ class NCC::Connection
         instance
     end
 
-    def create_instance(instance_spec, wait_for_ip=60)
+    def create_instance(instance_spec, wait_for_ip=nil)
+        wait_for_ip ||= @create_timeout
+
         if ! instance_spec.kind_of? NCC::Instance
             instance_spec = NCC::Instance.new(@cfg, instance_spec)
         end
@@ -516,6 +522,7 @@ class NCC::Connection
         rescue StandardError => err
             inv_update = { 'fqdn' => fqdn, 'status' => 'decommissioned' }
             if ! server.nil? and server.id
+                inv_update['uuid'] = server.id
                 inv_update['serial_number'] = server.id
             end
             @ncc.inventory.update('system', inv_update, fqdn)

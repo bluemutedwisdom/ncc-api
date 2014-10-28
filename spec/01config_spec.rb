@@ -1,7 +1,6 @@
 #!/usr/bin/env rspec
 # -*- mode: ruby -*-
 
-$LOAD_PATH.unshift 'test/lib'
 require 'ncc_spec_helper'
 require 'ncc/config'
 require 'fileutils'
@@ -22,7 +21,7 @@ describe NCC::Config do
         it "is current" do
             set_testvalue('testvalue0')
             ncc = NCC::Config.new('test/data/etc/test.conf')
-            ncc.current?.should be_true
+            expect(ncc.current?).to be_truthy
         end
 
         it "raises an ArgumentError when config doesn't exist" do
@@ -168,10 +167,10 @@ describe NCC::Config do
 
         it "produces a hash slice" do
             h = $ncc.to_hash(:clouds, 'services')
-            h.should have(2).items
-            h.should have_key :clouds
-            h.should have_key 'services'
-            h.should_not have_key 'testkey'
+            expect(h.keys.size).to eq 2
+            expect(h).to have_key :clouds
+            expect(h).to have_key 'services'
+            expect(h).to_not have_key 'testkey'
         end
 
     end

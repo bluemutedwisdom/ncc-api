@@ -98,15 +98,7 @@ class NCC::Connection::OpenStack < NCC::Connection
     end
 
     def instance_ip_address(server)
-        instance_network_names = ['instance_net', 'instnace_net']
-        if !server.addresses.nil?
-            instance_network_names.each do |network_name|
-                if server.addresses.has_key? network_name
-                    return server.addresses[network_name].first['addr']
-                end
-            end
-        end
-        return nil
+        server.private_ip_address.to_s
     end
 
     def instance_host(server)
