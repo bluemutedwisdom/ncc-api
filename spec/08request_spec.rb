@@ -198,7 +198,7 @@ describe NCC::Connection do
             system['image'].should == 'centos5.6'
             system['size'].should == 'm1.medium'
             system['created_by'].should == 'user0'
-            system['ip_address'].should == '10.0.0.2'
+            system['ipaddress'].should == '10.0.0.2'
             system['host_fqdn'].should == 'm0002299'
         end
 
@@ -255,7 +255,7 @@ describe NCC::Connection do
                 system['image'].should == 'centos5.6'
                 system['size'].should == 'm1.medium'
                 system['serial_number'].should == instance.id
-                system['ip_address'].should == instance.ip_address
+                system['ipaddress'].should == instance.ip_address
             end
 
             it "should update inventory upon error" do
