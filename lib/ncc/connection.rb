@@ -47,7 +47,7 @@ class NCC::Connection
         @ncc = ncc
         @cache = { }
         @cfg = ncc.config
-        @cfg_mtime = @cfg.mtime
+        @cfg_mtime = @cfg[:clouds][cloud].mtime
         @cloud = cloud
         @logger = opt[:logger] if opt.has_key? :logger
         @cache_timeout = opt[:cache_timeout] || 600

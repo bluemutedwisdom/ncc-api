@@ -3,6 +3,12 @@ NCC-API Roadmap
 
 Various features and fixups need to be added into the NCC-API.
 
+Operations
+----------
+
+* NCC-API needs a clean way to use authentication and incorporate it into actions (e.g. "created_by").
+* The logger interface needs to align with typical Rack and Ruby logging classes, and then use them.
+
 User Data
 ---------
 

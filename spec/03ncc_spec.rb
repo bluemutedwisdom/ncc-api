@@ -29,8 +29,10 @@ describe NCC do
     describe '#clouds' do
         specify { $ncc.clouds.should have(2).items }
         specify { $ncc.clouds('awscloud').should be_a NCC::Connection }
-        specify { $ncc.clouds('awscloud').object_id.should ==
-            $ncc.clouds('awscloud').object_id }
+        specify {
+            expect($ncc.object_id).to eq $ncc.object_id
+            expect($ncc.clouds('awscloud').object_id).to eq $ncc.clouds('awscloud').object_id
+        }
     end
 
     describe '#sizes' do
