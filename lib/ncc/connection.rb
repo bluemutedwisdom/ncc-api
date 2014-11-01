@@ -518,9 +518,7 @@ class NCC::Connection
             if wait_for_ip > 0 and instance_ip_address(server).nil?
                 info "#{@cloud} waiting for ip on #{server.id}"
                 this = self
-                server.wait_for(wait_for_ip) { ready? }
-		STDERR.puts "got server #{server.inspect}"
-		STDERR.puts "got server ip #{server.private_ip_address.to_s}"
+                server.wait_for(wait_for_ip) { instance_ip_address(server)  }
             end
         rescue StandardError => err
             inv_update = { 'fqdn' => fqdn, 'status' => 'decommissioned' }
@@ -538,8 +536,8 @@ class NCC::Connection
         info "Created instance instance_id=#{server.id} at #{provider} cloud #{@cloud} in #{elapsed}s"
         instance = instance_for server
         instance_spec.id = instance.id
+        # NO
         instance_spec.ip_address = server.private_ip_address.to_s  # instance.ip_address
-		STDERR.puts "setting server ip #{instance_spec.ip_address} from #{instance.ip_address} or #{server.private_ip_address}"
         instance_spec.host = instance.host
         inv_req = inventory_request(instance_spec)
         inv_req['cloud'] = @cloud

@@ -46,6 +46,12 @@ def setup_fixture
     FileUtils.cp_r('test/fixture', 'test/data')
 end
 
+def inv_get(inv, fqdn)
+    # NOMS::CMDB mocking doesn't mock query searching
+    # inv.query('system', 'fqdn=' + fqdn).first
+    inv.do_request(:GET => "system/#{fqdn}")
+end
+
 class LogCatcher < Hash
 
     def initialize(opts={})

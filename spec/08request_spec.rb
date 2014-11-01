@@ -16,10 +16,6 @@ def next_name(inv)
     m[1].succ + '.' + m[2]
 end
 
-def inv_get(inv, fqdn)
-    inv.query('system', 'fqdn=' + fqdn).first
-end
-
 describe NCC do
 
     before(:all) { setup_fixture }
@@ -103,6 +99,11 @@ describe NCC::Connection do
 
             before :each do
                 $request = $ncc.clouds('awscloud').provider_request($instance)
+            end
+
+            after :all do
+                $ncc.config[:clouds]['awscloud'].delete 'defaults'
+                $ncc.config[:providers]['aws'].delete 'defaults'
             end
 
             it "produces provider-specific fields" do
@@ -264,8 +265,7 @@ describe NCC::Connection do
                     instance = $ncc.clouds('awscloud').
                         create_instance({ 'status' => 'nonexistent' })
                 end.to raise_error NCC::Error
-                system = $ncc.inventory.query('system',
-                                        'fqdn=' + target_fqdn).first
+                system = inv_get($ncc.inventory, target_fqdn)
                 system['status'].should == 'decommissioned'
             end
 

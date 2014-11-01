@@ -45,8 +45,7 @@ describe NCC::Connection do
             end
 
             it "updates inventory" do
-                system0 = $ncc.inventory.query('system',
-                                         'fqdn=' + $instance.name).first
+                system0 = inv_get($ncc.inventory, $instance.name)
                 system0['status'].should_not == 'decommissioned'
                 $aws.delete($instance.id)
                 system1 = $ncc.inventory.query('system',

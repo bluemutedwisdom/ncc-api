@@ -36,7 +36,7 @@ describe NCC::Connection do
         describe "#reboot" do
 
             it "reboots the instance" do
-                $ncc.clouds('awscloud').reboot($instance.id).should be_true
+                expect($ncc.clouds('awscloud').reboot($instance.id)).to be_truthy
             end
 
         end
