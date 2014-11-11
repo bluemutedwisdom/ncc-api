@@ -98,7 +98,13 @@ class NCC::Connection::OpenStack < NCC::Connection
     end
 
     def instance_ip_address(server)
-        server.private_ip_address.to_s
+        begin
+            server.private_ip_address.to_s
+        rescue StandardError => err
+            # Fog collapses badly when you just ask it for this
+            # field which isn't there (yet?)
+            nil
+        end
     end
 
     def instance_host(server)

@@ -115,9 +115,13 @@ class NCC::Connection
     end
 
     def do_fog
-        do_connect unless @fog
+        unless @fog
+            debug "do_fog: connecting because @fog is nil (@auth_retry_limit=#{@auth_retry_limit})"
+            do_connect
+        end
         remaining_tries = @auth_retry_limit
         begin
+            debug "do_fog: beginning fog operation"
             yield @fog
         rescue Excon::Errors::Unauthorized => err
             # might be an expired auth token, retry
@@ -136,6 +140,7 @@ class NCC::Connection
         rescue NCC::Error => err
             raise err
         rescue StandardError => err
+            debug "Unknown error [#{err.class}]: #{err.message} #{err.backtrace.join("\n   ")}"
             @fog = nil
             raise NCC::Error::Cloud, "Error communicating with #{provider} " +
                 "cloud #{@cloud} [#{err.class}]: #{err.message}"
@@ -518,9 +523,10 @@ class NCC::Connection
             if wait_for_ip > 0 and instance_ip_address(server).nil?
                 info "#{@cloud} waiting for ip on #{server.id}"
                 this = self
-                server.wait_for(wait_for_ip) { this.instance_ip_address(server)  }
+                server.wait_for(wait_for_ip) { ready? and this.instance_ip_address(server)  }
             end
         rescue StandardError => err
+            debug "Error [#{err.class}]: #{err.message} #{err.backtrace.join("\n   ")}"
             inv_update = { 'fqdn' => fqdn, 'status' => 'decommissioned' }
             if ! server.nil? and server.id
                 inv_update['uuid'] = server.id
