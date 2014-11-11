@@ -424,7 +424,7 @@ class NCC::Connection
     def instances(instance_id=nil)
         debug "instances(#{instance_id.inspect})"
         if instance_id.nil?
-            do_fog { |fog| fog.servers }.map { |server| instance_for server }
+            do_fog { |fog| fog.servers.map { |server| instance_for server } }
         else
             server = do_fog { |fog| fog.servers.get instance_id }
             if server.nil?

@@ -22,14 +22,30 @@ require 'ncc/config'
 require 'ncc/connection'
 require 'ncc/instance'
 require 'ncc/error'
+require 'ncc/version'
+
+class NCC::Configurator
+
+    attr_accessor :config_path
+
+    def initialize
+        @config_path = ['/etc/ncc-api']
+    end
+
+end
 
 class NCC
     attr_reader :config, :inventory
 
+    @@global_config = NCC::Configurator.new
+
+    def self.configure
+        yield @@global_config
+    end
+
     def initialize(config_path=nil, opt={})
         @logger = opt[:logger] if opt.has_key? :logger
-        config_path ||= [
-            '/etc/ncc-api']
+        config_path ||= @@global_config.config_path
         config_path = [config_path] unless config_path.respond_to? :unshift
         config_path.unshift(File.join(ENV['NCCAPI_HOME'], 'etc')) if
             ENV['NCCAPI_HOME']
@@ -100,4 +116,3 @@ class NCC
     end
 
 end
-

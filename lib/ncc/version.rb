@@ -1,3 +1,3 @@
 class NCC
-    VERSION = '1.0.2.unstable'
+    VERSION = '1.0.2'
 end
