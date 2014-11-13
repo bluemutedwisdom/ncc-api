@@ -115,12 +115,12 @@ class NCC::Connection
     end
 
     def do_fog
-        unless @fog
-            debug "do_fog: connecting because @fog is nil (@auth_retry_limit=#{@auth_retry_limit})"
-            do_connect
-        end
         remaining_tries = @auth_retry_limit
         begin
+            unless @fog
+                debug "do_fog: connecting because @fog is nil (@auth_retry_limit=#{@auth_retry_limit})"
+                do_connect
+            end
             debug "do_fog: beginning fog operation"
             yield @fog
         rescue Excon::Errors::Unauthorized => err
@@ -321,7 +321,7 @@ class NCC::Connection
                 do_fog { |fog| fog.send(enum).get(id) }
             end
         else
-            do_fog { |fog| fog.send(enum) }
+            do_fog { |fog| fog.send(enum).map { |e| e } }
         end
     end
 

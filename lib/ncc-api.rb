@@ -29,7 +29,7 @@ end
 
 $ncc = NCC.new
 
-def error_message(status, err)
+def error_message(status, err, object=nil)
     status_message = case status
                      when 400
                          "400 Bad Request"
@@ -42,6 +42,14 @@ def error_message(status, err)
                      end
     status_message ||= status.to_s
     data = { "status" => status_message, "message" => err.message }
+    # I can't really just spit the object out here because I don't
+    # know what it is--it might be configuration objects that would
+    # contain passwords.
+    unless object.nil?
+        data['original_object'] = {
+            "class" => object.class
+        }
+    end
     if params.has_key? 'details'
         data['details'] = err.backtrace
         data['error'] = err.class
@@ -68,7 +76,7 @@ def respond(status, header={}, &block)
     rescue NCC::Error::Client => error
         halt error_message(400, error)
     rescue Exception => error
-        halt error_message(500, error)
+        halt error_message(500, error, obj)
     end
 end
 
