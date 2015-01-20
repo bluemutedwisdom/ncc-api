@@ -105,6 +105,24 @@ Console Log
 
 Returns plain text of console log.
 
+Interactive Console
+-------------------
+
+.. ::
+
+   HTTP: GET /ncc_api/v2/clouds/_cloud_/instances/_id_/console_url
+
+Returns a hyperlink to an interactive console.
+
+============ =============================================================
+Parameter    Description
+============ =============================================================
+url          A URL for the interactive console. The console type and
+             connection information should generally be derivable from the
+             URL itself. For example, Openstack clouds return a link to
+             the novnc proxy on the Openstack controller and include a
+             token used to connect to the console.
+============ =============================================================
 
 Reboot
 ------
