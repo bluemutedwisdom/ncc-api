@@ -4,7 +4,7 @@ Operations
 Create Instance
 ---------------
 
-.. ::
+::
 
    HTTP: POST /ncc_api/v2/clouds/_cloud_/instances
 
@@ -67,7 +67,7 @@ to which the options apply. For example, to pass the extended request parameter
 Terminate Instance
 ------------------
 
-.. ::
+::
 
    HTTP: DELETE /ncc_api/v2/clouds/_cloud_/instances/_id_
 
@@ -79,7 +79,7 @@ Errors: 404 Not Found
 Instance Information
 --------------------
 
-.. ::
+::
 
    HTTP: GET /ncc_api/v2/clouds/_cloud_/instances/_id_
    -GET /ncc_api/v2/clouds/_cloud_/instances/_name_-
@@ -99,7 +99,7 @@ status         An abstract status (translated from provider-specific
 Console Log
 -----------
 
-.. ::
+::
 
    HTTP: GET /ncc_api/v2/clouds/_cloud_/instances/_id_/console_log
 
@@ -108,7 +108,7 @@ Returns plain text of console log.
 Interactive Console
 -------------------
 
-.. ::
+::
 
    HTTP: GET /ncc_api/v2/clouds/_cloud_/instances/_id_/console_url
 
@@ -129,7 +129,7 @@ Reboot
 
 Reboot the OS of an instance.
 
-.. ::
+::
 
    HTTP: PUT /ncc_api/v2/locations/_location_/instances/_id_
 
@@ -158,43 +158,43 @@ Instance Status
 Statuses marked with (+) can be updated by the client, which causes the action
 listed.
 
-=================== ============== ============ == ==============================
-NCC Status          Openstack_     `AWS EC2`_      Description
-=================== ============== ============ == ==============================
-active              ACTIVE         running         The instance is active
-build               BUILD          pending         The instance has not finished
-                                                   the original build process
-terminated          DELETED        terminated      The instance is deleted
-error               ERROR                          The instance is in error
-hard-reboot (+)     HARD_REBOOT                    The instance is hard rebooting
-active              PASSWORD                       The password is being reset on
-                                                   the instance
-reboot (+)          REBOOT                         The instance is in a soft
-                                                   reboot state
-provider-operation  REBUILD                        The instance is currently
-                                                   being rebuilt from an image
-provider-operation  RESCUE                         The server is in rescue mode
-provider-operation  RESIZE                         Server is performing the
-                                                   differential copy of data that
-                                                   changed during its initial
-                                                   copy
-provider-operation  REVERT_RESIZE                  The resize or migration of a
-                                                   instance failed for some
-                                                   reason. The destination
-                                                   instance is being cleaned up
-                                                   and the original source
-                                                   instance is restarting
-active              SHUTOFF                        The instance was powered down
-                                                   by the user
+=================== ============== ============= == ==============================
+NCC Status          Openstack_     `AWS EC2`_       Description
+=================== ============== ============= == ==============================
+active              ACTIVE         running          The instance is active
+build               BUILD          pending          The instance has not finished
+                                                    the original build process
+terminated          DELETED        terminated       The instance is deleted
+error               ERROR                           The instance is in error
+hard-reboot (+)     HARD_REBOOT                     The instance is hard rebooting
+active              PASSWORD                        The password is being reset on
+                                                    the instance
+reboot (+)          REBOOT                          The instance is in a soft
+                                                    reboot state
+provider-operation  REBUILD                         The instance is currently
+                                                    being rebuilt from an image
+provider-operation  RESCUE                          The server is in rescue mode
+provider-operation  RESIZE                          Server is performing the
+                                                    differential copy of data that
+                                                    changed during its initial
+                                                    copy
+provider-operation  REVERT_RESIZE                   The resize or migration of a
+                                                    instance failed for some
+                                                    reason. The destination
+                                                    instance is being cleaned up
+                                                    and the original source
+                                                    instance is restarting
+active              SHUTOFF                         The instance was powered down
+                                                    by the user
 shutting-down                      shutting-down
 suspending                         stopping
-suspend (+)         SUSPENDED      stopped         The instance is suspended
-unknown             UNKNOWN                        The state of the instance is
-                                                   unknown
-needs-verify        VERIFY_RESIZE                  System is awaiting confirmation
-                                                   that the server is operational
-                                                   after a move or resize
-=================== ============== ============ == ==============================
+suspend (+)         SUSPENDED      stopped          The instance is suspended
+unknown             UNKNOWN                         The state of the instance is
+                                                    unknown
+needs-verify        VERIFY_RESIZE                   System is awaiting confirmation
+                                                    that the server is operational
+                                                    after a move or resize
+=================== ============== ============= == ==============================
 
 .. _Openstack: http://docs.openstack.org/api/openstack-compute/2/content/List_Servers-d1e2078.html
 
