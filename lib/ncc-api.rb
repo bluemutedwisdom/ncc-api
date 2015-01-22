@@ -157,6 +157,11 @@ get '/ncc_api/v2/clouds/:cloud/instances/:instance_id/console_log' do |cloud,
     end
 end
 
+get '/ncc_api/v2/clouds/:cloud/instances/:instance_id/console' do |cloud,
+    instance_id|
+    respond(200) { $ncc.clouds(cloud).console(instance_id) }
+end
+
 post '/ncc_api/v2/clouds/:cloud/instances' do |cloud|
     respond 201 do
         begin
