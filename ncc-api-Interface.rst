@@ -110,7 +110,7 @@ Interactive Console
 
 ::
 
-   HTTP: GET /ncc_api/v2/clouds/_cloud_/instances/_id_/console_url
+   HTTP: GET /ncc_api/v2/clouds/_cloud_/instances/_id_/console
 
 Returns a hyperlink to an interactive console.
 
@@ -123,6 +123,9 @@ url          A URL for the interactive console. The console type and
              the novnc proxy on the Openstack controller and include a
              token used to connect to the console.
 ============ =============================================================
+
+Depending on the provider type, additional metadata *may* be returned in
+other keys.
 
 Reboot
 ------
