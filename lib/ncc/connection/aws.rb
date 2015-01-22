@@ -79,7 +79,9 @@ class NCC::Connection::AWS < NCC::Connection
 
     def console_log(instance_id)
         begin
-            @fog.get_console_output(instance_id).body
+            do_fog do |fog|
+                fog.get_console_output(instance_id).body
+            end
         rescue Fog::Compute::AWS::NotFound
             instance_not_found instance_id
         rescue Exception => e
@@ -89,10 +91,10 @@ class NCC::Connection::AWS < NCC::Connection
 
     def provider_request_of(instance)
         {
-                      :name => instance.name,
-                      :flavor_id => sizes(instance.size)['provider_id'],
-                      :image_id => images(instance.image)['provider_id'],
-                      :tags => { 'Name' => instance.name }
+            :name => instance.name,
+            :flavor_id => sizes(instance.size)['provider_id'],
+            :image_id => images(instance.image)['provider_id'],
+            :tags => { 'Name' => instance.name }
         }.merge(instance.extra provider)
     end
 

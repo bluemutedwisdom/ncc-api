@@ -112,7 +112,7 @@ class NCC::Connection::OpenStack < NCC::Connection
     end
 
     def console_log(instance_id)
-        server = @fog.servers.get(instance_id)
+        server = do_fog { |fog| fog.servers.get(instance_id) }
         if server.nil?
             instance_not_found instance_id
         else
@@ -125,12 +125,12 @@ class NCC::Connection::OpenStack < NCC::Connection
     end
 
     def console(instance_id, console_type='novnc')
-        server = @fog.servers.get(instance_id)
+        server = do_fog { |fog| fog.servers.get(instance_id) }
         if server.nil?
             instance_not_found instance_id
         else
             begin
-                response = @fog.get_vnc_console(server.id, console_type)
+                response = do_fog { |fog| fog.get_vnc_console(server.id, console_type) }
                 body = response.body
             rescue Exception => e
                 communication_error e.message
@@ -158,7 +158,7 @@ class NCC::Connection::OpenStack < NCC::Connection
     end
 
     def reboot(instance_id)
-        server = @fog.servers.get(instance_id)
+        server = do_fog { |fog| fog.servers.get(instance_id) }
         if server.nil?
             instance_not_found instance_id
         else
