@@ -592,6 +592,11 @@ class NCC::Connection
             "#{provider} does not support console logs"
     end
 
+    def console(instance_id)
+        raise NCC::Error::NotFound, "Cloud #{@cloud} provider " +
+            "#{provider} does not support interactive console"
+    end
+
     def reboot(instance_id)
         server = do_fog { |fog| fog.servers.get(instance_id) }
         if server.nil?

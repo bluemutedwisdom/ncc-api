@@ -124,6 +124,31 @@ class NCC::Connection::OpenStack < NCC::Connection
         end
     end
 
+    def console(instance_id, console_type='novnc')
+        server = @fog.servers.get(instance_id)
+        if server.nil?
+            instance_not_found instance_id
+        else
+            begin
+                response = @fog.get_vnc_console(server.id, console_type)
+                body = response.body
+            rescue Exception => e
+                communication_error e.message
+            end
+
+            unless body.respond_to?(:[]) and
+                    body['console'] and
+                    body['console'].respond_to?(:[]) and
+                    body['console']['url']
+                raise communication_error "Expected Fog::Compute::Openstack#get_vnc_console(#{instance_id.inspect}, " +
+                    "#{console_type.inspect})# to return object with key 'console' => 'url'; " +
+                    "instead got: #{body.inspect}"
+            end
+
+            body['console']
+        end
+    end
+
     def provider_request_of(instance)
         {
             :name => instance.name,
