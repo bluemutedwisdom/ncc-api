@@ -274,6 +274,66 @@ describe NCC::Connection do
         context "in OpenStack" do
             # Server creation does not work in OpenStack mocks
 
+            before :all do
+                $instance = NCC::Instance.new($ncc.config,
+                                          'size' => 'm1.medium',
+                                          'environment' => 'lab',
+                                          'role' => 'ncc-api-v2::role',
+                                          'extra' => {
+                                                  'inventory' => {
+                                                      'created_by' => 'user0'
+                                                  }
+                                              },
+                                          'image' => 'centos5.6')
+            end
+
+            before :each do
+                $ncc.clouds('openstack0').fog.servers.each { |s| s.destroy }
+            end
+
+            it "should create an instance" do
+                instance = $ncc.clouds('openstack0').create_instance($instance)
+                server = $ncc.clouds('openstack0').fog.servers.first
+                expect(instance.id).to eq server.id
+                expect(instance.name).to eq server.name
+                expect(server.state).to eq 'ACTIVE'
+                expect(instance.size).to eq 'm1.medium'
+                expect(instance.image).to eq 'centos5.6'
+                expect(instance.role).to be_empty
+                expect(instance.environment).to be_nil
+                expect(instance.status).to eq 'active'
+                expect(instance.extra).to be_nil
+                expect(instance.ip_address).to_not be_nil
+                expect(instance.ip_address).to eq server.private_ip_address
+                # expect(server.flavor_id).to eq '2'
+                # server.image_id.should == $aws_image_id
+            end
+
+            it "should update inventory" do
+                target_fqdn = next_name($ncc.inventory)
+                instance = $ncc.clouds('openstack0').create_instance($instance)
+                instance.name.should == target_fqdn
+                system = inv_get($ncc.inventory, target_fqdn)
+                system['status'].should == 'building'
+                system['cloud'].should == 'openstack0'
+                system['environment_name'].should == 'lab'
+                system['roles'].should == 'ncc-api-v2::role'
+                system['image'].should == 'centos5.6'
+                system['size'].should == 'm1.medium'
+                system['serial_number'].should == instance.id
+                system['ipaddress'].should == instance.ip_address
+            end
+
+            it "should update inventory upon error" do
+                target_fqdn = next_name($ncc.inventory)
+                expect do
+                    instance = $ncc.clouds('openstack0').
+                        create_instance({ 'status' => 'nonexistent' })
+                end.to raise_error NCC::Error
+                system = inv_get($ncc.inventory, target_fqdn)
+                system['status'].should == 'decommissioned'
+            end
+
         end
 
     end
