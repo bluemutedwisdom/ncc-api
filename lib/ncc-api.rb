@@ -22,12 +22,9 @@ require 'sinatra'
 require 'fog'
 require 'rack/logger'
 
-
-configure :development do
-    set :logging, Logger::DEBUG
+def ncc
+    $ncc ||= NCC.new(nil, :logger => logger)
 end
-
-$ncc = NCC.new
 
 def error_message(status, err, object=nil)
     status_message = case status
@@ -56,6 +53,7 @@ def error_message(status, err, object=nil)
     end
     body = (params.has_key?('pretty') ? (JSON.pretty_generate(data) +
             "\n") : data.to_json)
+    logger.error "#{status_message} (#{err.class}) #{message}: #{err.backtrace.join("\n")}"
     [status, { "content-type" => "application/json" }, body]
 end
 
@@ -82,7 +80,7 @@ end
 
 get '/ncc_api' do
     respond 200 do
-        $ncc.config['services'].to_hash.merge({ 'v2api' => $ncc.api_url })
+        ncc.config['services'].to_hash.merge({ 'v2api' => ncc.api_url })
     end
 end
 
@@ -98,23 +96,23 @@ get '/ncc_api/v2' do
 end
 
 get '/ncc_api/v2/clouds' do
-    respond(200) { $ncc.clouds }
+    respond(200) { ncc.clouds }
 end
 
 get '/ncc_api/v2/sizes' do
-    respond(200) { $ncc.sizes }
+    respond(200) { ncc.sizes }
 end
 
 get '/ncc_api/v2/images' do
-    respond(200) { $ncc.images }
+    respond(200) { ncc.images }
 end
 
 get '/ncc_api/v2/sizes/:size_id' do |size_id|
-    respond(200) { $ncc.sizes(size_id) }
+    respond(200) { ncc.sizes(size_id) }
 end
 
 get '/ncc_api/v2/images/:image_id' do |image_id|
-    respond(200) { $ncc.images(image_id) }
+    respond(200) { ncc.images(image_id) }
 end
 
 get '/ncc_api/v2/clouds/:cloud' do |cloud|
@@ -122,30 +120,30 @@ get '/ncc_api/v2/clouds/:cloud' do |cloud|
         {
             'name' => cloud,
             'status' => 'ok',
-            'provider' => $ncc.clouds(cloud).provider,
-            'service' => $ncc.clouds(cloud).fog.class.to_s
+            'provider' => ncc.clouds(cloud).provider,
+            'service' => ncc.clouds(cloud).fog.class.to_s
         }
     end
 end
 
 get '/ncc_api/v2/clouds/:cloud/sizes' do |cloud|
-    respond(200) { $ncc.clouds(cloud).sizes }
+    respond(200) { ncc.clouds(cloud).sizes }
 end
 
 get '/ncc_api/v2/clouds/:cloud/sizes/:size_id' do |cloud, size_id|
-    respond(200) { $ncc.clouds(cloud).sizes(size_id) }
+    respond(200) { ncc.clouds(cloud).sizes(size_id) }
 end
 
 get '/ncc_api/v2/clouds/:cloud/images' do |cloud|
-    respond(200) { $ncc.clouds(cloud).images }
+    respond(200) { ncc.clouds(cloud).images }
 end
 
 get '/ncc_api/v2/clouds/:cloud/images/:image_id' do |cloud, image_id|
-    respond(200) { $ncc.clouds(cloud).images(image_id) }
+    respond(200) { ncc.clouds(cloud).images(image_id) }
 end
 
 get '/ncc_api/v2/clouds/:cloud/instances' do |cloud|
-    respond(200) { $ncc.clouds(cloud).instances.map { |i| i.to_hash } }
+    respond(200) { ncc.clouds(cloud).instances.map { |i| i.to_hash } }
 end
 
 
@@ -153,13 +151,13 @@ get '/ncc_api/v2/clouds/:cloud/instances/:instance_id/console_log' do |cloud,
     instance_id|
     respond(200, 'content-type' => 'text/plain') do
         # TODO influence last-modified with console log timestamp
-        $ncc.clouds(cloud).console_log(instance_id)['output']
+        ncc.clouds(cloud).console_log(instance_id)['output']
     end
 end
 
 get '/ncc_api/v2/clouds/:cloud/instances/:instance_id/console' do |cloud,
     instance_id|
-    respond(200) { $ncc.clouds(cloud).console(instance_id) }
+    respond(200) { ncc.clouds(cloud).console(instance_id) }
 end
 
 post '/ncc_api/v2/clouds/:cloud/instances' do |cloud|
@@ -168,7 +166,7 @@ post '/ncc_api/v2/clouds/:cloud/instances' do |cloud|
             request.body.rewind
             instance_spec = JSON.parse(request.body.read)
             instance_req = instance_spec
-            $ncc.clouds(cloud).create_instance(instance_req)
+            ncc.clouds(cloud).create_instance(instance_req)
         rescue JSON::ParserError => e
             raise NCC::Error::Client, "Error parsing request: #{e.message}"
         end
@@ -177,7 +175,7 @@ end
 
 get '/ncc_api/v2/clouds/:cloud/instances/:instance_id' do |cloud, instance_id|
     respond(200) do
-        $ncc.clouds(cloud).instances(instance_id).to_hash
+        ncc.clouds(cloud).instances(instance_id).to_hash
     end
 end
 
@@ -185,14 +183,14 @@ end
 delete '/ncc_api/v2/clouds/:cloud/instances/:instance_id' do |cloud,
     instance_id|
     respond 204 do
-        $ncc.clouds(cloud).delete(instance_id)
+        ncc.clouds(cloud).delete(instance_id)
         nil
     end
 end
 
 put '/ncc_api/v2/clouds/:cloud/instances/:instance_id' do |cloud, instance_id|
     respond 202 do
-        instance = $ncc.clouds(cloud).instances(instance_id)
+        instance = ncc.clouds(cloud).instances(instance_id)
         begin
             request.body.rewind
             update_spec = JSON.parse(request.body.read)
@@ -205,7 +203,7 @@ put '/ncc_api/v2/clouds/:cloud/instances/:instance_id' do |cloud, instance_id|
             when 'status'
                 if value == 'reboot'
                     actions << lambda { instance.status = 'reboot' }
-                    $ncc.clouds(cloud).reboot(instance.id)
+                    ncc.clouds(cloud).reboot(instance.id)
                 else
                     raise NCC::Error::Client,
                     "Cannot update to status #{value.inspect}"

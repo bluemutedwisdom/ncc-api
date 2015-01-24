@@ -105,8 +105,12 @@ class NCC::Config
     end
 
     def debug(msg)
-        if opt(:logger) and opt(:logger).respond_to? :debug
-            opt(:logger).debug "#<#{me}>: #{msg}"
+        # This produces a *lot* of debug logging, thus it's best to be
+        # able to use something else to control its log level.
+        if ENV.has_key? 'NCC_CONFIG_DEBUG' and not ENV['NCC_CONFIG_DEBUG'].empty?
+            if opt(:logger) and opt(:logger).respond_to? :debug
+                opt(:logger).debug "#<#{me}>: #{msg}"
+            end
         end
     end
 

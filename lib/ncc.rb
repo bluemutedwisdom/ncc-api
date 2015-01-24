@@ -26,10 +26,11 @@ require 'ncc/version'
 
 class NCC::Configurator
 
-    attr_accessor :config_path
+    attr_accessor :config_path, :logger
 
     def initialize
         @config_path = ['/etc/ncc-api']
+        @logger = nil
     end
 
 end
@@ -44,19 +45,26 @@ class NCC
     end
 
     def initialize(config_path=nil, opt={})
-        @logger = opt[:logger] if opt.has_key? :logger
+        @logger = opt[:logger] || @@global_config.logger
         config_path ||= @@global_config.config_path
         config_path = [config_path] unless config_path.respond_to? :unshift
         config_path.unshift(File.join(ENV['NCCAPI_HOME'], 'etc')) if
             ENV['NCCAPI_HOME']
+        info "Loading configuration from: #{config_path.inspect}"
         @config = NCC::Config.new(config_path, :logger => @logger)
         @inventory = NOMS::CMDB.new(@config)
         @clouds = { }
     end
 
     def debug(msg)
-        if @logger.respond_to? :debug
+        if @logger and @logger.respond_to? :debug
             @logger.debug "#{me}: #{msg}"
+        end
+    end
+
+    def info(msg)
+        if @logger and @logger.respond_to? :info
+            @logger.info "#{me}: #{msg}"
         end
     end
 

@@ -15,9 +15,6 @@
 # limitations under the License.
 # */
 
-# TODO:
-# Align desired logger interface with Ruby Logger class standard
-
 require 'rubygems'
 require 'fog'
 require 'uuidtools'
@@ -90,8 +87,8 @@ class NCC::Connection
     end
 
     def notice(msg)
-        if @logger and @logger.respond_to? :notice
-            @logger.notice "#{self} #{msg}"
+        if @logger and @logger.respond_to? :info
+            @logger.info "#{self} #{msg}"
         end
     end
 
@@ -101,11 +98,24 @@ class NCC::Connection
         end
     end
 
+    def error(msg)
+        if @logger and @logger.respond_to? :error
+            @logger.error "#{self} #{msg}"
+        end
+    end
+
+    def fatal(msg)
+        if @logger and @logger.respond_to? :fatal
+            @logger.error "#{self} #{msg}"
+        end
+    end
+
     def connection_params
         []
     end
 
     def do_connect
+        info "Connecting to #{provider} cloud #{@cloud}"
         cloud_config = @cfg[:clouds][@cloud]
         pnames = connection_params + ['provider']
         params = Hash[cloud_config.to_hash(*pnames).map do |k, v|
@@ -564,9 +574,9 @@ class NCC::Connection
     end
 
     def communication_error(message)
-        message = "Error communicating with #{provider} cloud #{@cloud}: " + message unless
+        raise NCC::Error::Cloud,
+        "Error communicating with #{provider} cloud #{@cloud}: " + message unless
             /Error .*communicating with/.match(message)
-        raise NCC::Error::Cloud, message
     end
 
     def delete(instance_id)

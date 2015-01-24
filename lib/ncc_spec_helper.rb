@@ -84,7 +84,7 @@ class LogCatcher < Hash
         end
     end
 
-    def log(level, msg, store=true)
+    def _log(level, msg, store=true)
         ts = Time.now.strftime('%Y-%m-%dT%H:%M:%S')
         text = "[#{ts}] #{level}: #{msg}"
         puts text if shouldshow(level, msg)
@@ -94,20 +94,24 @@ class LogCatcher < Hash
         end
     end
 
-    def warn(msg)
-        log('warn', msg)
-    end
-
     def debug(msg)
-        log('debug', msg, false)
-    end
-
-    def notice(msg)
-        log('notice', msg)
+        _log('debug', msg, false)
     end
 
     def info(msg)
-        log('info', msg)
+        _log('info', msg)
+    end
+
+    def warn(msg)
+        _log('warn', msg)
+    end
+
+    def error(msg)
+        _log('error', msg)
+    end
+
+    def fatal(msg)
+        _log('fatal', msg)
     end
 
 end
