@@ -53,7 +53,7 @@ def error_message(status, err, object=nil)
     end
     body = (params.has_key?('pretty') ? (JSON.pretty_generate(data) +
             "\n") : data.to_json)
-    logger.error "#{status_message} (#{err.class}) #{message}: #{err.backtrace.join("\n")}"
+    logger.error "#{status_message} (#{err.class}) #{err.message}: #{err.backtrace.join("\n")}"
     [status, { "content-type" => "application/json" }, body]
 end
 
